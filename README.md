@@ -11,7 +11,7 @@ The goal of this benchmark is to test the performance of pure rendering / [dom r
 ## Results
 On OSX 10.10.4, Chrome:
 
-![Results](https://raw.github.com/somebee/todomvc-render-benchmark/master/results.png "Results")
+![Results](http://imba.io/benchmark@2x.png)
 
 As you can see, Imba is *much* faster than the other implementations. So much faster in fact, that your first reaction is likely along the line "this seems fishy". Well, it really is that fast. It uses a very different approach from existing virtual dom implementations, by inlining and reusing actual dom nodes on subsequent renders. This is only practical to do in a compiled language (such as [Imba](http://imba.io)) - as the compiler can analyze the views, and do inline caching that would be very chaotic and cumbersome in plain js.
 
