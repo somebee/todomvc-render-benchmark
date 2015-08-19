@@ -9,6 +9,10 @@ There has been a TodoMVC benchmark floating around earlier. It mainly tested the
 The goal of this benchmark is to test the performance of pure rendering / [dom reconciliation](https://facebook.github.io/react/docs/reconciliation.html). It inserts, renames, toggles, moves, and removes todos through an API that must be custom made for each TodoMVC implementation. These actions should happen as low-level as possible, and should *not* trigger any sort of rendering. API.render() however should trigger a full forced rendering / reconciliation.
 
 ## Results
+On OSX 10.10.4, Chrome:
+
+![Results](https://raw.github.com/somebee/todomvc-render-benchmark/master/results.png "Results")
+
 As you can see, Imba is *much* faster than the other implementations. So much faster in fact, that your first reaction is likely along the line "this seems fishy". Well, it really is that fast. It uses a very different approach from existing virtual dom implementations, by inlining and reusing actual dom nodes on subsequent renders. This is only practical to do in a compiled language (such as [Imba](http://imba.io)) - as the compiler can analyze the views, and do inline caching that would be very chaotic and cumbersome in plain js.
 
 Imba enables a new way of writing web apps. Fully syncing the view is now so inexpensive that it is, for the first time, viable to simply render on every single frame, without any need for listeners, bindings, dependency tracking etc. Keeping the view 'in sync' is no longer an issue. It is like rendering templates on the server - where you always know the whole state/story on render. If you for some reason want to keep tracking and only rerendering subviews etc this is as easy as it ever was with React.
