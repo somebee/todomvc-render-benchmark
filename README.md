@@ -1,6 +1,6 @@
 # Benchmarking raw rendering performance of TodoMVC implementations.
 
-The benchmark can be run [here](http://somebee.github.io/todomvc-render-perf/index.html)
+The benchmark can be run [here](http://somebee.github.io/todomvc-render-benchmark/index.html)
 
 ## Why
 There has been a TodoMVC benchmark floating around earlier. It mainly tested the performance of your browser, by creating fake events and navigating the dom to insert, complete, and remove todos. Some frameworks such as elm and mithril outperformed React by a lot. The (only) reason for this was that they used asynchronous rendering, while React rendered / synchronized the whole view every time a todo was inserted, completed, and removed. Making rendering in React asynchronous would take 2 lines of code, and bring its performance up to the others. A better benchmark is needed.
@@ -16,7 +16,7 @@ Imba enables a new way of writing web apps. Fully syncing the view is now so ine
 Even though it looks incredibly boring, the "Unchanged Render" is possibly the most interesting benchmark. All of these frameworks are plenty fast if they only render whenever something has changed. But if the frameworks are fast enough to render the whole app in 0.01ms, you could skip thinking about all sorts of tracking to keep the view in sync.
 
 ## Spec
-A spec for the API is underway, but until then you can look at the default [api.js](https://github.com/somebee/todomvc-render-perf/blob/master/resources/api.js).
+A spec for the API is underway, but until then you can look at the default [api.js](https://github.com/somebee/todomvc-render-benchmark/blob/master/resources/api.js).
 
 ## Contribute
 I am sure that the different implementations can be tweaked for better performance, and I'm happy to apply such improvements if you send a pull request. The improvements should however, adhere to the philosophy of the framework and maintain readability.
