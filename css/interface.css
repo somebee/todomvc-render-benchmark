@@ -1,0 +1,159 @@
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+div {
+  box-sizing: border-box;
+}
+body {
+  font-family: 'Lucida Grande', 'Trebuchet MS', 'Bitstream Vera Sans', Verdana, Helvetica, sans-serif;
+  background-color: #fdfdfd;
+}
+ol {
+  list-style: none;
+  margin: 5px 0;
+  padding: 0;
+}
+ol ol {
+  margin-left: 2em;
+  list-position: outside;
+}
+nav {
+  position: absolute;
+  right: 10px;
+}
+#top {
+  position: relative;
+  height: 64px;
+  display: none;
+}
+#controls {
+  width: 100%;
+  min-height: 64px;
+  padding: 10px;
+  vertical-align: top;
+  background: #202837;
+  color: white;
+  position: relative;
+  top: 0px;
+  left: 0px;
+  z-index: 1000;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-flex-direction: row;
+      -ms-flex-direction: row;
+          flex-direction: row;
+  -webkit-align-items: center;
+      -ms-flex-align: center;
+          align-items: center;
+  -webkit-flex-wrap: wrap;
+      -ms-flex-wrap: wrap;
+          flex-wrap: wrap;
+}
+#controls button {
+  margin: 10px;
+}
+#analysis {
+  padding: 10px 40px;
+}
+#analysis:empty {
+  display: none;
+}
+#analysis .chart {
+  height: 240px;
+}
+#apps {
+  padding: 10px 10px;
+  position: relative;
+}
+#apps > div {
+  width: 50%;
+  padding: 10px;
+  position: relative;
+  display: inline-block;
+}
+button {
+  -webkit-appearance: none;
+  padding: 8px 20px;
+  background-color: #4d596f;
+  color: white;
+  font-weight: bold;
+  margin-right: 8px;
+  border: none;
+  border-radius: 2px;
+}
+button:hover {
+  background-color: #3B4A67;
+}
+button[disabled] {
+  opacity: 0.5;
+  background-color: #3B4A67;
+}
+.running button {
+  pointer-events: none;
+  opacity: 0.5;
+}
+#apps > div > .header {
+  width: 100%;
+  position: relative;
+  height: 30px;
+  color: #202837;
+  background: #e8e8e8;
+  line-height: 30px;
+  padding: 0px 10px;
+  border-top-left-radius: 3px;
+  border-top-right-radius: 3px;
+  font-size: 12px;
+  font-weight: bold;
+}
+iframe {
+  border: 4px solid #e8e8e8;
+  border-top: none;
+  margin: 0;
+  padding: 0;
+  vertical-align: top;
+  width: 100%;
+  box-sizing: border-box;
+  height: 550px;
+}
+#apps > div.running iframe {
+  border-color: #202837;
+}
+#apps > div.running .header {
+  background-color: #202837;
+  color: white;
+}
+@media (max-width: 1000px) {
+  #apps > div {
+    width: 50%;
+  }
+}
+@media (max-width: 600px) {
+  #apps > div {
+    width: 100%;
+    display: block;
+  }
+}
+@media (max-width: 500px) {
+  #analysis {
+    padding: 10px 10px;
+  }
+  #analysis .chart {
+    height: 340px;
+  }
+  #controls {
+    position: relative;
+    height: auto;
+  }
+  #apps > div {
+    width: 100%;
+  }
+  #apps > div iframe {
+    display: none;
+  }
+  #apps > div.running iframe {
+    display: block;
+  }
+}

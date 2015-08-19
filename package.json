@@ -1,0 +1,40 @@
+{
+  "name": "todomvc-render-perf",
+  "description": "Benchmarking for TodoMVC",
+  "keywords": [
+    "imba",
+    "react",
+    "angular",
+    "todomvc"
+  ],
+  "author": "Sindre Aarsaether",
+  "bugs": "https://github.com/somebee/todomvc-render-perf/issues",
+  "version": "0.1.0",
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "http://github.com/somebee/todomvc-render-perf/raw/master/LICENSE"
+    }
+  ],
+  "engines": {
+    "node": ">=0.8.0"
+  },
+  "files": [],
+  "directories": {},
+  "main": "./index.js",
+  "homepage": "http://somebee.github.io/todomvc-render-perf/index.html",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/somebee/todomvc-render-perf.git"
+  },
+  "devDependencies": {
+    "marked": "^0.3.3"
+  },
+  "dependencies": {
+    "express": "^4.13.2",
+    "gulp": "^3.9.0",
+    "gulp-less": "^3.0.3",
+    "less": "^2.5.1",
+    "less-plugin-autoprefix": "^1.4.2"
+  }
+}
