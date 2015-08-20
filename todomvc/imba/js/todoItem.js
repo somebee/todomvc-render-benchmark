@@ -43,9 +43,9 @@
 			
 			return this.flag('completed',(todo.completed)).setChildren(Imba.static([
 				(t0 = this.$a || (this.$a = t$('div').flag('view'))).setContent(Imba.static([
-					(t0.$$a = t0.$$a || t$('label').setHandler('dblclick','edit')).setText(("" + (todo.title))).end(),
-					(this._toggle = this._toggle || t$('input').setRef('toggle',this).setType('checkbox').setHandler('change','toggle')).setChecked((todo.completed)).end(),
-					(t0.$$c = t0.$$c || t$('button').flag('destroy').setHandler('tap','drop')).end()
+					(t0.$$a = t0.$$a || t$('label').setHandler('dblclick','edit',this)).setText(("" + (todo.title))).end(),
+					(this._toggle = this._toggle || t$('input').setRef('toggle',this).setType('checkbox').setHandler('change','toggle',this)).setChecked((todo.completed)).end(),
+					(t0.$$c = t0.$$c || t$('button').flag('destroy').setHandler('tap','drop',this)).end()
 				],1)).end(),
 				(this._input = this._input || t$('input').setRef('input',this).flag('edit').setType('text')).end()
 			],1)).synced();

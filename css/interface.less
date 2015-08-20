@@ -15,10 +15,37 @@ ol { list-style: none; margin: 5px 0; padding: 0; }
 ol ol { margin-left: 2em; list-position: outside; }
 nav { position: absolute; right: 10px; }
 
+.button {
+	-webkit-appearance: none;
+	padding: 8px 20px;
+	background-color: rgb(77, 89, 111);
+	color: white;
+	font-weight: bold;
+	font-size: inherit;
+	text-decoration: none;
+	font-size: 12px;
+	margin-right: 8px;
+	border: none;
+	border-radius: 2px;
+
+	&:hover {
+		background-color: #3B4A67;
+	}
+
+	&[disabled] {
+		opacity: 0.5;
+		background-color: #3B4A67;
+	}
+}
+
 #top {
 	position: relative;
 	height: 64px;
 	display: none;
+}
+
+button {
+	.button;
 }
 
 #controls {
@@ -40,6 +67,10 @@ nav { position: absolute; right: 10px; }
 	button {
 		margin: 10px;
 	}
+}
+
+footer {
+	padding: 10px 20px;
 }
 
 #analysis {
@@ -65,25 +96,7 @@ nav { position: absolute; right: 10px; }
 	display: inline-block;
 }
 
-button {
-	-webkit-appearance: none;
-	padding: 8px 20px;
-	background-color: rgb(77, 89, 111);
-	color: white;
-	font-weight: bold;
-	margin-right: 8px;
-	border: none;
-	border-radius: 2px;
-}
 
-button:hover {
-	background-color: #3B4A67;
-}
-
-button[disabled] {
-	opacity: 0.5;
-	background-color: #3B4A67;
-}
 
 .running button {
 	pointer-events: none;

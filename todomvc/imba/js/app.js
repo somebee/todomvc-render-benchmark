@@ -86,7 +86,7 @@
 				
 				(all.length > 0) && (
 					(t0 = this.$b || (this.$b = t$('section').flag('main'))).setContent(Imba.static([
-						(t0.$$a = t0.$$a || t$('input').flag('toggle-all').setType('checkbox').setHandler('change','toggleAll')).end(),
+						(t0.$$a = t0.$$a || t$('input').flag('toggle-all').setType('checkbox').setHandler('change','toggleAll',this)).end(),
 						(t0.$$b = t0.$$b || t$('ul').flag('todo-list')).setContent(this.list(items)).end()
 					],1)).end()
 				),
@@ -103,7 +103,7 @@
 							(t2 = t1.$$c || (t1.$$c = t$('li'))).setContent((t2.$$a = t2.$$a || t$('a').setHref('#/completed')).flag('selected',(items == done)).setText('Completed').end()).end()
 						],1)).end(),
 						(done.length > 0) && (
-							(t0.$$c = t0.$$c || t$('button').flag('clear-completed').setHandler('tap','clearCompleted')).setText('Clear completed').end()
+							(t0.$$c = t0.$$c || t$('button').flag('clear-completed').setHandler('tap','clearCompleted',this)).setText('Clear completed').end()
 						)
 					],1)).end()
 				)

@@ -120,6 +120,7 @@ class Framework
 		@todoCount = count
 		api.render(true)
 		api.AUTORENDER = yes
+		self
 
 	def deactivate
 		node:classList.remove('running')

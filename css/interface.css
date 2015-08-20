@@ -23,10 +23,50 @@ nav {
   position: absolute;
   right: 10px;
 }
+.button {
+  -webkit-appearance: none;
+  padding: 8px 20px;
+  background-color: #4d596f;
+  color: white;
+  font-weight: bold;
+  font-size: inherit;
+  text-decoration: none;
+  font-size: 12px;
+  margin-right: 8px;
+  border: none;
+  border-radius: 2px;
+}
+.button:hover {
+  background-color: #3B4A67;
+}
+.button[disabled] {
+  opacity: 0.5;
+  background-color: #3B4A67;
+}
 #top {
   position: relative;
   height: 64px;
   display: none;
+}
+button {
+  -webkit-appearance: none;
+  padding: 8px 20px;
+  background-color: #4d596f;
+  color: white;
+  font-weight: bold;
+  font-size: inherit;
+  text-decoration: none;
+  font-size: 12px;
+  margin-right: 8px;
+  border: none;
+  border-radius: 2px;
+}
+button:hover {
+  background-color: #3B4A67;
+}
+button[disabled] {
+  opacity: 0.5;
+  background-color: #3B4A67;
 }
 #controls {
   width: 100%;
@@ -55,6 +95,9 @@ nav {
 #controls button {
   margin: 10px;
 }
+footer {
+  padding: 10px 20px;
+}
 #analysis {
   padding: 10px 40px;
 }
@@ -73,23 +116,6 @@ nav {
   padding: 10px;
   position: relative;
   display: inline-block;
-}
-button {
-  -webkit-appearance: none;
-  padding: 8px 20px;
-  background-color: #4d596f;
-  color: white;
-  font-weight: bold;
-  margin-right: 8px;
-  border: none;
-  border-radius: 2px;
-}
-button:hover {
-  background-color: #3B4A67;
-}
-button[disabled] {
-  opacity: 0.5;
-  background-color: #3B4A67;
 }
 .running button {
   pointer-events: none;

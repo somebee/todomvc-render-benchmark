@@ -1,8 +1,7 @@
 
 API = {
-	// Always on for now
-	
-	AUTORENDER: false, 
+	// Always on for now	
+	AUTORENDER: true, 
 
 	AUTOPERSIST: false,
 
