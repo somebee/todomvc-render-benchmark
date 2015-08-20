@@ -87,7 +87,7 @@
 				(all.length > 0) && (
 					(t0 = this.$b || (this.$b = t$('section').flag('main'))).setContent(Imba.static([
 						(t0.$$a = t0.$$a || t$('input').flag('toggle-all').setType('checkbox').setHandler('change','toggleAll')).end(),
-						(t0.$$b = t0.$$b || t$('ul').flag('todo-list')).setContent(Imba.static([this.list(items)],1)).end()
+						(t0.$$b = t0.$$b || t$('ul').flag('todo-list')).setContent(this.list(items)).end()
 					],1)).end()
 				),
 				
@@ -98,9 +98,9 @@
 							active.length == 1 ? ('item left') : ('items left')
 						],1)).end(),
 						(t1 = t0.$$b || (t0.$$b = t$('ul').flag('filters'))).setContent(Imba.static([
-							(t2 = t1.$$a || (t1.$$a = t$('li'))).setContent(Imba.static([(t2.$$a = t2.$$a || t$('a').setHref('#/')).flag('selected',(items == all)).setText('All').end()],1)).end(),
-							(t2 = t1.$$b || (t1.$$b = t$('li'))).setContent(Imba.static([(t2.$$a = t2.$$a || t$('a').setHref('#/active')).flag('selected',(items == active)).setText('Active').end()],1)).end(),
-							(t2 = t1.$$c || (t1.$$c = t$('li'))).setContent(Imba.static([(t2.$$a = t2.$$a || t$('a').setHref('#/completed')).flag('selected',(items == done)).setText('Completed').end()],1)).end()
+							(t2 = t1.$$a || (t1.$$a = t$('li'))).setContent((t2.$$a = t2.$$a || t$('a').setHref('#/')).flag('selected',(items == all)).setText('All').end()).end(),
+							(t2 = t1.$$b || (t1.$$b = t$('li'))).setContent((t2.$$a = t2.$$a || t$('a').setHref('#/active')).flag('selected',(items == active)).setText('Active').end()).end(),
+							(t2 = t1.$$c || (t1.$$c = t$('li'))).setContent((t2.$$a = t2.$$a || t$('a').setHref('#/completed')).flag('selected',(items == done)).setText('Completed').end()).end()
 						],1)).end(),
 						(done.length > 0) && (
 							(t0.$$c = t0.$$c || t$('button').flag('clear-completed').setHandler('tap','clearCompleted')).setText('Clear completed').end()

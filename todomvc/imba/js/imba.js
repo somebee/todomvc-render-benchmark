@@ -1,18 +1,17 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.imba = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 (function(){
-	// externs;
-	
 	require('./imba');
 	require('./core.events');
 	require('./dom');
+	require('./dom.client');
 	require('./dom.html');
+	require('./dom.legacy');
 	require('./dom.events');
 	require('./dom.static');
-	
 	require('./selector');
 
 })()
-},{"./core.events":2,"./dom":5,"./dom.events":3,"./dom.html":4,"./dom.static":6,"./imba":7,"./selector":8}],2:[function(require,module,exports){
+},{"./core.events":2,"./dom":6,"./dom.client":3,"./dom.events":4,"./dom.html":5,"./dom.legacy":7,"./dom.static":8,"./imba":9,"./selector":10}],2:[function(require,module,exports){
 (function(){
 	
 	
@@ -99,14 +98,64 @@
 (function(){
 	function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 	
-	// externs;
 	
+	var prefixes = ['-webkit-','-ms-','-moz-','-o-','-blink-'];
+	var props = ['transform','transition','animation'];
+	var styles = window.getComputedStyle(document.documentElement,'');
+	Imba.CSSKeyMap = {};
 	
+	for (var i=0, ary=iter$(styles), len=ary.length, prefixed; i < len; i++) {
+		// really? this must be for the client ---
+		// there is no way to set this otherwise?
+		prefixed = ary[i];
+		var unprefixed = prefixed.replace(/^-(webkit|ms|moz|o|blink)-/,'');
+		var camelCase = unprefixed.replace(/-(\w)/g,function(m,a) { return a.toUpperCase(); });
+		
+		// if there exists an unprefixed version -- always use this
+		if (prefixed != unprefixed) {
+			if (styles.hasOwnProperty(unprefixed)) { continue };
+		};
+		
+		// register the prefixes
+		Imba.CSSKeyMap[unprefixed] = Imba.CSSKeyMap[camelCase] = prefixed;
+	};
+	
+	Imba.extendTag('htmlelement', function(tag){
+		
+		// override the original css method
+		tag.prototype.css = function (key,val){
+			if (key instanceof Object) {
+				for (var i=0, keys=Object.keys(key), l=keys.length; i < l; i++){
+					this.css(keys[i],key[keys[i]]);
+				};
+				return this;
+			};
+			
+			key = Imba.CSSKeyMap[key] || key;
+			
+			if (val == null) {
+				this.dom().style.removeProperty(key);
+			} else if (val == undefined) {
+				return this.dom().style[key];
+			} else {
+				if ((typeof val=='number'||val instanceof Number) && key.match(/width|height|left|right|top|bottom/)) {
+					val = val + "px";
+				};
+				this.dom().style[key] = val;
+			};
+			return this;
+		};
+	});
+
+})()
+},{}],4:[function(require,module,exports){
+(function(){
+	function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 	var doc = document;
 	var win = window;
 	
-	var hasTouchEvents = win && win.ontouchstart !== undefined; // .hasOwnProperty('ontouchstart')
-	
+	// typeof ontouchstart instead?
+	var hasTouchEvents = window && window.ontouchstart !== undefined; // .hasOwnProperty('ontouchstart')
 	
 	// Ringbuffer for events?
 	
@@ -132,9 +181,6 @@
 	Imba.RingBuffer.prototype.last = function (){
 		return this._array[this._head % this._keep];
 	};
-	
-	// button-states. Normalize ringbuffer to contain reuseable
-	// normalized events?
 	
 	// really more like a pointer?
 	Imba.Pointer = function Pointer(){
@@ -193,27 +239,17 @@
 			this.setDirty(false);
 			// button should only change on mousedown etc
 			if (e1.type == 'mousedown') {
-				// this is correct when we know it is a mousedown(!)
 				this.setButton(e1.button);
-				// console.log('button-state changed!!!',button)
 				this.setTouch(new Imba.Touch(e1,this));
 				this.touch().mousedown(e1,e1);
-				// trigger pointerdown
 			} else if (e1.type == 'mousemove') {
 				if (this.touch()) { this.touch().mousemove(e1,e1) };
 			} else if (e1.type == 'mouseup') {
-				// console.log('mouseup!!!')
 				this.setButton(-1);
-				// console.log('button-state changed!!!',button)
 				if (this.touch()) { this.touch().mouseup(e1,e1) };
 				this.setTouch(null); // reuse?
 				// trigger pointerup
 			};
-			
-			// if !e0 || e0:button != e1:button
-			// 	console.log('button-state changed!!!',e0,e1)
-			// see if button has transitioned?
-			// console.log e:type
 		} else {
 			// set type to stationary?
 			// update always?
@@ -229,7 +265,6 @@
 		var bubble = pars.bubble !== undefined ? pars.bubble : true;
 		return true;
 	};
-	
 	
 	Imba.Pointer.prototype.cleanup = function (){
 		return Imba.POINTERS;
@@ -645,20 +680,11 @@
 	};
 	
 	
-	
-	// should be possible
-	// def Imba.Pointer.update
-	
-	
 	// A Touch-event is created on mousedown (always)
 	// and while it exists, mousemove and mouseup will
 	// be delegated to this active event.
 	Imba.POINTER = new Imba.Pointer();
 	Imba.POINTERS = [Imba.POINTER];
-	
-	// are we really sure we want to use RAF for this?
-	// Imba.Pointer.update
-	
 	
 	
 	// regular event stuff
@@ -786,11 +812,11 @@
 		var sym;
 		if (!(sym = this.keychar())) { return };
 		sym = Imba.CHARMAP[sym] || sym;
-		var combo = [];
-		if (this.event().ctrlKey) { combo.push('ctrl') };
-		if (this.event().shiftKey) { combo.push('shift') };
-		if (this.event().altKey) { combo.push('alt') };
-		if (this.event().metaKey) { combo.push('cmd') };
+		var combo = [],e = this.event();
+		if (e.ctrlKey) { combo.push('ctrl') };
+		if (e.shiftKey) { combo.push('shift') };
+		if (e.altKey) { combo.push('alt') };
+		if (e.metaKey) { combo.push('cmd') };
 		combo.push(sym);
 		return combo.join("_").toLowerCase();
 	};
@@ -1025,7 +1051,7 @@
 	Imba.Events.setEnabled(true);
 
 })()
-},{}],4:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 (function(){
 	
 	// predefine all supported html tags
@@ -1377,7 +1403,8 @@
 	Imba.defineTag('wbr');
 
 })()
-},{}],5:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
+(function (global){
 (function(){
 	function idx$(a,b){
 		return (b && b.indexOf) ? b.indexOf(a) : [].indexOf.call(a,b);
@@ -1413,6 +1440,7 @@
 		this;
 	};
 	
+	global.ElementTag = ElementTag; // global class 
 	
 	ElementTag.prototype.__object = {name: 'object'};
 	ElementTag.prototype.object = function(v){ return this._object; }
@@ -1465,11 +1493,6 @@
 	
 	ElementTag.prototype.getAttribute = function (key){
 		return this.dom().getAttribute(key);
-	};
-	
-	ElementTag.prototype.object = function (v){
-		if (arguments.length) { return ((this.setObject(v),v),this) };
-		return this._object;
 	};
 	
 	ElementTag.prototype.setContent = function (content){
@@ -1800,36 +1823,40 @@
 	ElementTag.prototype.flag = function (ref,toggle){
 		// it is most natural to treat a second undefined argument as a no-switch
 		// so we need to check the arguments-length
-		if (arguments.length == 2) {
-			toggle ? (this.flags().add(ref)) : (this.flags().remove(ref));
+		if (arguments.length == 2 && !toggle) {
+			this._dom.classList.remove(ref);
 		} else {
-			this.flags().add(ref);
+			this._dom.classList.add(ref);
 		};
 		return this;
 	};
 	
 	ElementTag.prototype.unflag = function (ref){
-		this.flags().remove(ref);
+		this._dom.classList.remove(ref);
+		return this;
+	};
+	
+	ElementTag.prototype.toggleFlag = function (ref){
+		this._dom.classList.toggle(ref);
 		return this;
 	};
 	
 	ElementTag.prototype.hasFlag = function (ref){
-		return this.flags().contains(ref);
+		return this._dom.classList.contains(ref);
 	};
-	
-	
 	
 	ElementTag.dom = function (){
 		if (this._dom) { return this._dom };
 		
 		var dom;
 		var sup = this.__super__.constructor;
+		var proto = this.prototype;
 		
 		// should clone the parent no?
 		if (this._isNative) {
-			dom = Imba.document().createElement(this._nodeType);
+			this._dom = dom = Imba.document().createElement(this._nodeType);
 		} else if (this._nodeType != sup._nodeType) {
-			dom = Imba.document().createElement(this._nodeType);
+			this._dom = dom = Imba.document().createElement(this._nodeType);
 			for (var i=0, ary=iter$(sup.dom()), len=ary.length, atr; i < len; i++) {
 				atr = ary[i];
 				dom.setAttribute(atr.name,atr.value);
@@ -1837,21 +1864,20 @@
 			// dom:className = sup.dom:className
 			// what about default attributes?
 		} else {
-			dom = sup.dom().cloneNode(false);
+			this._dom = dom = sup.dom().cloneNode(false);
 		};
 		
 		// should be a way to use a native domtype without precreating the doc
 		// and still keeping the classes?
-		
 		if (this._domFlags) {
-			// TODO remove classList dependency (ie9)
 			for (var i=0, ary=iter$(this._domFlags), len=ary.length; i < len; i++) {
-				dom.classList.add(ary[i]);
+				proto.flag.call(this,ary[i]);
 			};
 		};
 		
-		return this._dom = dom;
+		return this._dom;
 	};
+	
 	
 	// we really ought to optimize this
 	ElementTag.createNode = function (flags,id){
@@ -1878,7 +1904,6 @@
 	};
 	
 	ElementTag.prototype.initialize = ElementTag;
-	
 	
 	function HTMLElementTag(){ ElementTag.apply(this,arguments) };
 	
@@ -1918,7 +1943,6 @@
 	Imba.defineTag = function (name,supr,body){
 		if(body==undefined && typeof supr == 'function') body = supr,supr = '';
 		var m = name.split("$");
-		
 		var name = m[0];
 		var ns = m[1];
 		
@@ -1926,17 +1950,16 @@
 		
 		var suprklass = Imba.TAGS[supr];
 		
+		var fname = name == 'var' ? ('vartag') : (name);
 		// should drop this in production / optimized mode, but for debug
 		// we create a constructor with a recognizeable name
-		var fun = new Function(("return function " + (name.replace(/[\s\-\:]/g,'_')) + "(dom)\{ this.setDom(dom); \}"));
-		var Tag = fun();
-		
-		var klass = Tag; // imba$class(func,suprklass)
+		var Tag = new Function(("return function " + (fname.replace(/[\s\-\:]/g,'_')) + "(dom)\{ this.setDom(dom); \}"))();
+		// var Tag = do |dom| this.setDom(dom)
+		var klass = Tag;
 		
 		extender(klass,suprklass);
 		
 		klass._nodeType = suprklass._nodeType || name;
-		
 		klass._name = name;
 		klass._ns = ns;
 		
@@ -2100,9 +2123,53 @@
 	tic$ = Imba.tagWithIdAndFlags;
 	id$ = Imba.getTagSingleton;
 	tag$wrap = Imba.getTagForDom;
+	
+	
+	// shim for classList
 
 })()
-},{}],6:[function(require,module,exports){
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],7:[function(require,module,exports){
+(function(){
+	
+	// unless document:documentElement:classList
+	if (!document.documentElement.classList) {
+		
+		
+			
+			ElementTag.prototype.hasFlag = function (ref){
+				return new RegExp('(^|\\s)' + ref + '(\\s|$)').test(this._dom.className);
+			};
+			
+			ElementTag.prototype.addFlag = function (ref){
+				if (this.hasFlag(ref)) { return this };
+				this._dom.className += (this._dom.className ? (' ') : ('')) + ref;
+				return this;
+			};
+			
+			ElementTag.prototype.unflag = function (ref){
+				if (!this.hasFlag(ref)) { return this };
+				var regex = new RegExp('(^|\\s)*' + ref + '(\\s|$)*','g');
+				this._dom.className = this._dom.className.replace(regex,'');
+				return this;
+			};
+			
+			ElementTag.prototype.toggleFlag = function (ref){
+				return this.hasFlag(ref) ? (this.unflag(ref)) : (this.flag(ref));
+			};
+			
+			ElementTag.prototype.flag = function (ref,bool){
+				if (arguments.length == 2 && bool == false) {
+					return this.unflag(ref);
+				};
+				return this.addFlag(ref);
+			};
+		
+		true;
+	};
+
+})()
+},{}],8:[function(require,module,exports){
 (function(){
 	function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 	
@@ -2354,14 +2421,22 @@
 	
 	Imba.extendTag('htmlelement', function(tag){
 		
-		
 		tag.prototype.setChildren = function (nodes){
+			if (nodes === this._children) {
+				return this;
+			};
+			
 			if (nodes && nodes.static) {
 				this.setStaticChildren(nodes);
+			} else if ((nodes instanceof Array) && (this._children instanceof Array)) {
+				reconcileCollection(this,nodes,this._children,null);
+			} else if ((typeof nodes=='string'||nodes instanceof String)) {
+				this.setText(nodes);
 			} else {
 				this.empty().append(nodes);
-				this._children = nodes;
 			};
+			
+			this._children = nodes;
 			return this;
 		};
 		
@@ -2408,7 +2483,7 @@
 	});
 
 })()
-},{}],7:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 (function(){
 	// externs;
 	
@@ -2419,7 +2494,7 @@
 	Imba = {};
 
 })()
-},{}],8:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 (function(){
 	function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 	
