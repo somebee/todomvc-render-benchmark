@@ -151,7 +151,8 @@
 		};
 		this._todoCount = count;
 		this.api().render(true);
-		return this.api().AUTORENDER = true;
+		this.api().AUTORENDER = true;
+		return this;
 	};
 	
 	Framework.prototype.deactivate = function (){

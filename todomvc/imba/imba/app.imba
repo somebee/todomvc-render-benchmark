@@ -38,7 +38,8 @@ tag app
 		model.clearCompleted
 
 	def list items
-		<todo[todo]@{todo:id}> for todo in items
+		for todo,i in items
+			<todo[todo]@{i}>
 
 	def render
 		API.RENDERCOUNT++
