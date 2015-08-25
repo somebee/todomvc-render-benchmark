@@ -151,7 +151,8 @@
 		};
 		this._todoCount = count;
 		this.api().render(true);
-		return this.api().AUTORENDER = true;
+		this.api().AUTORENDER = true;
+		return this;
 	};
 	
 	Framework.prototype.deactivate = function (){
@@ -255,6 +256,44 @@
 		});
 	};
 	
+	Bench.prototype.reset = function (){
+		Framework.map(function(ex) {
+			ex.api().FULLRENDER = true;
+			ex.api().RENDERCOUNT = -1;
+			return ex.api().render(true);
+		});
+		return this;
+	};
+	
+	Bench.prototype.warmup = function (times){
+		var self=this;
+		if(times === undefined) times = 1000;
+		this.reset();
+		setTimeout(function() {
+			
+			var fn = self._options.step;
+			var apps = Framework.map(function(app) { return app; });
+			var step = function() {
+				var app;
+				if (app = apps.shift()) {
+					var i = 0;
+					var bm = {App: app};
+					var start = new Date();
+					while (i++ < times){
+						fn.call(bm);
+					};
+					var elapsed = new Date() - start;
+					app.setStatus(("" + (app.name()) + " - " + self._name + " - " + times + " iterations - " + elapsed + "ms"));
+					return setTimeout(function() { return step(); },50);
+				};
+			};
+			
+			return step();
+		},50);
+		
+		return self;
+	};
+	
 	
 	Bench.prototype.present = function (){
 		// create div
@@ -317,20 +356,24 @@
 	// as it really does things in a very different way
 	// Framework.new('angularjs')
 	
-	new Bench(
+	EVERYTHING = new Bench(
 		{label: 'Bench Everything',
 		title: 'Everything (remove, toggle, append, rename)',
 		step: function() {
 			var len = this.App._todoCount;
 			var api = this.App.api();
 			var idx = Math.round(Math.random() * (len - 1));
+			
+			// moving a random task
+			idx = api.RENDERCOUNT % len;
+			idx = Math.min(0,len - 2);
 			var todo = api.removeTodoAtIndex(idx);
-			api.render(true);
 			api.insertTodoAtIndex(todo,1000);
+			
 			api.render(true);
-			api.toggleTodoAtIndex((idx + 1) % len);
+			api.toggleTodoAtIndex((idx) % len);
 			api.render(true);
-			api.renameTodoAtIndex((idx + 2) % len,("Todo - " + (api.RENDERCOUNT)));
+			api.renameTodoAtIndex((idx + 1) % len,("Todo - " + (api.RENDERCOUNT)));
 			api.render(true);
 			return;
 		}}
@@ -394,6 +437,7 @@
 		};
 		return window.controls.appendChild(btn);
 	});
+	
 	
 	// window:runFullRender:onclick = do full.run
 	// Suites.fullRender.run({ async: true, queued: false })

@@ -203,6 +203,34 @@ class Bench
 			# present
 			@suite.run { async: true, queued: false }
 
+	def reset
+		Framework.map do |ex|
+			ex.api.FULLRENDER = yes
+			ex.api.RENDERCOUNT = -1
+			ex.api.render(yes)
+		self
+		
+	def warmup times = 1000
+		reset
+		setTimeout(&,50) do
+
+			var fn = @options:step
+			var apps = Framework.map do |app| app
+			var step = do
+				if var app = apps.shift
+					var i = 0
+					var bm = {App: app}
+					var start = Date.new
+					while i++ < times
+						fn.call(bm)
+					var elapsed = Date.new - start
+					app.status = "{app.name} - {@name} - {times} iterations - {elapsed}ms"
+					setTimeout(&,50) do step()
+
+			step()
+
+		return self
+		
 
 	def present
 		# create div
@@ -257,20 +285,24 @@ Framework.new('mithril')
 # as it really does things in a very different way
 # Framework.new('angularjs')
 
-Bench.new
+EVERYTHING = Bench.new
 	label: 'Bench Everything'
 	title: 'Everything (remove, toggle, append, rename)'
 	step: do
 		var len = this.App.@todoCount
 		var api = this.App.api
 		var idx = Math.round(Math.random * (len - 1))
+
+		# moving a random task
+		var idx = api.RENDERCOUNT % len
+		var idx = Math.min(0,len - 2)
 		var todo = api.removeTodoAtIndex(idx)
-		api.render(yes)
 		api.insertTodoAtIndex(todo,1000)
+
 		api.render(yes)
-		api.toggleTodoAtIndex((idx + 1) % len)
+		api.toggleTodoAtIndex((idx) % len)
 		api.render(yes)
-		api.renameTodoAtIndex((idx + 2) % len,"Todo - {api.RENDERCOUNT}")
+		api.renameTodoAtIndex((idx + 1) % len,"Todo - {api.RENDERCOUNT}")
 		api.render(yes)
 		return
 
@@ -323,6 +355,7 @@ Manager.suites.map do |suite|
 		btn:disabled = "disabled"
 		suite.run
 	window:controls.appendChild(btn)
+
 
 # window:runFullRender:onclick = do full.run
 # Suites.fullRender.run({ async: true, queued: false })
