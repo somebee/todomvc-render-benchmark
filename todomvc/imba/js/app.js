@@ -50,9 +50,8 @@
 		};
 		
 		tag.prototype.list = function (items){
-			for (var i=0, ary=iter$(items), len=ary.length, todo, res=[]; i < len; i++) {
-				todo = ary[i];
-				res.push((this['_' + todo.id] = this['_' + todo.id] || t$('todo')).setObject(todo).end());
+			for (var i=0, ary=iter$(items), len=ary.length, res=[]; i < len; i++) {
+				res.push((this['_' + i] = this['_' + i] || t$('todo')).setObject(ary[i]).end());
 			};
 			return res;
 		};
