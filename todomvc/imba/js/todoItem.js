@@ -6,7 +6,7 @@
 	// to do something similar to React 'shouldComponentUpdate'. You can implement
 	// this however you want - you merely try to figure out whether anything have
 	// changed inside tag#commit, and then rerender if it has.
-	Imba.defineTag('todo','li', function(tag){
+	return Imba.defineTag('todo','li', function(tag){
 		
 		tag.prototype.model = function (){
 			return this.up(q$('._app',this)).model();
@@ -38,21 +38,21 @@
 		};
 		
 		tag.prototype.render = function (){
-			var t0;
+			var t0, t1;
 			var todo = this._object;
 			
-			return this.flag('completed',(todo.completed)).setChildren(Imba.static([
-				(t0 = this.$a || (this.$a = t$('div').flag('view'))).setContent(Imba.static([
-					(t0.$$a = t0.$$a || t$('label').setHandler('dblclick','edit',this)).setText(("" + (todo.title))).end(),
+			return this.flag('completed',(todo.completed)).setChildren([
+				(t0 = this.$a=this.$a || t$('div').flag('view')).setContent([
+					(t1 = t0.$$a=t0.$$a || t$('label').setHandler('dblclick','edit',this)).setContent(("" + (todo.title)),3).end(),
 					(this._toggle = this._toggle || t$('input').setRef('toggle',this).setType('checkbox').setHandler('change','toggle',this)).setChecked((todo.completed)).end(),
 					(t0.$$c = t0.$$c || t$('button').flag('destroy').setHandler('tap','drop',this)).end()
-				],1)).end(),
+				],2).end(),
 				(this._input = this._input || t$('input').setRef('input',this).flag('edit').setType('text')).end()
-			],1)).synced();
+			],2).synced();
 		};
 		
 		tag.prototype.edit = function (){
-			var self=this;
+			var self = this;
 			this._editing = true;
 			this.flag('editing');
 			this._input.setValue(this.object().title);
@@ -94,5 +94,6 @@
 			if (e.which() == ESCAPE_KEY) { return this.cancel() };
 		};
 	});
+	
 
 })()

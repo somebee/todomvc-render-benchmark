@@ -10,11 +10,12 @@
 		require('./dom.legacy');
 		require('./dom.events');
 		require('./dom.static');
-		require('./selector');
+		require('./dom.scheduler');
+		return require('./selector');
 	};
 
 })()
-},{"./core.events":2,"./dom":6,"./dom.client":3,"./dom.events":4,"./dom.html":5,"./dom.legacy":7,"./dom.static":8,"./imba":9,"./selector":10}],2:[function(require,module,exports){
+},{"./core.events":2,"./dom":6,"./dom.client":3,"./dom.events":4,"./dom.html":5,"./dom.legacy":7,"./dom.scheduler":8,"./dom.static":9,"./imba":10,"./selector":11}],2:[function(require,module,exports){
 (function(){
 	
 	
@@ -45,7 +46,7 @@
 		var $1;
 		var cbs,list,tail;
 		cbs = obj.__listeners__ || (obj.__listeners__ = {});
-		list = cbs[($1=event)] || (cbs[$1] = {});
+		list = cbs[($1 = event)] || (cbs[$1] = {});
 		tail = list.tail || (list.tail = (list.next = {}));
 		tail.listener = listener;
 		tail.path = path;
@@ -86,7 +87,7 @@
 		return;
 	};
 	
-	Imba.observeProperty = function (observer,key,trigger,target,prev){
+	return Imba.observeProperty = function (observer,key,trigger,target,prev){
 		if (prev && typeof prev == 'object') {
 			Imba.unlisten(prev,'all',observer,trigger);
 		};
@@ -107,7 +108,7 @@
 	var styles = window.getComputedStyle(document.documentElement,'');
 	Imba.CSSKeyMap = {};
 	
-	for (var i=0, ary=iter$(styles), len=ary.length, prefixed; i < len; i++) {
+	for (var i = 0, ary = iter$(styles), len = ary.length, prefixed; i < len; i++) {
 		// really? this must be for the client ---
 		// there is no way to set this otherwise?
 		prefixed = ary[i];
@@ -123,12 +124,12 @@
 		Imba.CSSKeyMap[unprefixed] = Imba.CSSKeyMap[camelCase] = prefixed;
 	};
 	
-	Imba.extendTag('htmlelement', function(tag){
+	return Imba.extendTag('htmlelement', function(tag){
 		
 		// override the original css method
 		tag.prototype.css = function (key,val){
 			if (key instanceof Object) {
-				for (var i=0, keys=Object.keys(key), l=keys.length; i < l; i++){
+				for (var i = 0, keys = Object.keys(key), l = keys.length; i < l; i++){
 					this.css(keys[i],key[keys[i]]);
 				};
 				return this;
@@ -157,7 +158,6 @@
 	var doc = document;
 	var win = window;
 	
-	// typeof ontouchstart instead?
 	var hasTouchEvents = window && window.ontouchstart !== undefined; // .hasOwnProperty('ontouchstart')
 	
 	// Ringbuffer for events?
@@ -254,12 +254,8 @@
 				// trigger pointerup
 			};
 		} else {
-			// set type to stationary?
-			// update always?
 			if (this.touch()) { this.touch().idle() };
 		};
-		
-		
 		return this;
 	};
 	
@@ -282,7 +278,7 @@
 	
 	Imba.Pointer.update = function (){
 		// console.log('update touch')
-		for (var i=0, ary=iter$(Imba.POINTERS), len=ary.length; i < len; i++) {
+		for (var i = 0, ary = iter$(Imba.POINTERS), len = ary.length; i < len; i++) {
 			ary[i].process();
 		};
 		// need to be able to prevent the default behaviour of touch, no?
@@ -290,6 +286,8 @@
 		return this;
 	};
 	
+	var lastNativeTouchTimeStamp = 0;
+	var lastNativeTouchTimeout = 50;
 	
 	// Imba.Touch
 	// Began	A finger touched the screen.
@@ -334,7 +332,7 @@
 	};
 	
 	Imba.Touch.ontouchstart = function (e){
-		for (var i=0, ary=iter$(e.changedTouches), len=ary.length, t; i < len; i++) {
+		for (var i = 0, ary = iter$(e.changedTouches), len = ary.length, t; i < len; i++) {
 			t = ary[i];
 			if (this.lookup(t)) { continue };
 			var touch = identifiers[t.identifier] = new this(e); // (e)
@@ -348,7 +346,7 @@
 	
 	Imba.Touch.ontouchmove = function (e){
 		var touch;
-		for (var i=0, ary=iter$(e.changedTouches), len=ary.length, t; i < len; i++) {
+		for (var i = 0, ary = iter$(e.changedTouches), len = ary.length, t; i < len; i++) {
 			t = ary[i];
 			if (touch = this.lookup(t)) {
 				touch.touchmove(e,t);
@@ -360,22 +358,24 @@
 	
 	Imba.Touch.ontouchend = function (e){
 		var touch;
-		for (var i=0, ary=iter$(e.changedTouches), len=ary.length, t; i < len; i++) {
+		for (var i = 0, ary = iter$(e.changedTouches), len = ary.length, t; i < len; i++) {
 			t = ary[i];
 			if (touch = this.lookup(t)) {
 				touch.touchend(e,t);
 				this.release(t,touch);
 				count--;
-				// not always supported!
-				// touches = touches.filter(||)
 			};
 		};
+		
+		// e.preventDefault
+		// not always supported!
+		// touches = touches.filter(||)
 		return this;
 	};
 	
 	Imba.Touch.ontouchcancel = function (e){
 		var touch;
-		for (var i=0, ary=iter$(e.changedTouches), len=ary.length, t; i < len; i++) {
+		for (var i = 0, ary = iter$(e.changedTouches), len = ary.length, t; i < len; i++) {
 			t = ary[i];
 			if (touch = this.lookup(t)) {
 				touch.touchcancel(e,t);
@@ -386,7 +386,17 @@
 		return this;
 	};
 	
+	Imba.Touch.onmousedown = function (e){
+		return this;
+	};
 	
+	Imba.Touch.onmousemove = function (e){
+		return this;
+	};
+	
+	Imba.Touch.onmouseup = function (e){
+		return this;
+	};
 	
 	
 	Imba.Touch.prototype.__phase = {name: 'phase'};
@@ -472,6 +482,7 @@
 	};
 	
 	Imba.Touch.prototype.touchstart = function (e,t){
+		// console.log 'native ontouchstart',e,t
 		this._event = e;
 		this._touch = t;
 		this._x = t.clientX;
@@ -482,6 +493,7 @@
 	};
 	
 	Imba.Touch.prototype.touchmove = function (e,t){
+		// console.log 'native ontouchmove',e,t
 		this._event = e;
 		this._x = t.clientX;
 		this._y = t.clientY;
@@ -491,12 +503,26 @@
 	};
 	
 	Imba.Touch.prototype.touchend = function (e,t){
+		// console.log 'native ontouchend',e,t,e:timeStamp
 		this._event = e;
 		// log "touchend"
 		this._x = t.clientX;
 		this._y = t.clientY;
 		this.ended();
-		if (e && this._suppress) { e.preventDefault() };
+		
+		lastNativeTouchTimeStamp = e.timeStamp;
+		
+		if (this._maxdr < 20) {
+			var tap = new Imba.Event(e);
+			tap.setType('tap');
+			tap.process();
+			if (tap._responder) { e.preventDefault() };
+		};
+		
+		if (e && this._suppress) {
+			e.preventDefault();
+		};
+		
 		return this;
 	};
 	
@@ -508,17 +534,21 @@
 	
 	Imba.Touch.prototype.mousedown = function (e,t){
 		// log "mousedown"
-		this._x = t.clientX;
-		this._y = t.clientY;
-		this.began();
-		return this;
+		var self = this;
+		self._x = t.clientX;
+		self._y = t.clientY;
+		self.began();
+		
+		self._mousemove = function(e) { return self.mousemove(e,e); };
+		doc.addEventListener('mousemove',self._mousemove,true);
+		// inside here -- start tracking mousemove directly
+		
+		return self;
 	};
 	
 	Imba.Touch.prototype.mousemove = function (e,t){
-		// log "mousemove"
 		this._x = t.clientX;
 		this._y = t.clientY;
-		// how does this work with touches?
 		this._event = e;
 		if (this._suppress) { e.preventDefault() };
 		this.update();
@@ -527,10 +557,11 @@
 	};
 	
 	Imba.Touch.prototype.mouseup = function (e,t){
-		// log "mousemove"
 		this._x = t.clientX;
 		this._y = t.clientY;
 		this.ended();
+		doc.removeEventListener('mousemove',this._mousemove,true);
+		this._mousemove = null;
 		return this;
 	};
 	
@@ -539,7 +570,7 @@
 	};
 	
 	Imba.Touch.prototype.began = function (){
-		// console.log "begaN??"
+		this._maxdr = this._dr = 0;
 		this._x0 = this._x;
 		this._y0 = this._y;
 		
@@ -549,7 +580,7 @@
 		var node = null;
 		
 		this._sourceTarget = dom && tag$wrap(dom);
-		// need to find the 
+		
 		while (dom){
 			node = tag$wrap(dom);
 			if (node && node.ontouchstart) {
@@ -561,20 +592,17 @@
 			dom = dom.parentNode;
 		};
 		
-		// console.log('target??',target)
 		this._updates++;
-		// if target
-		// 	target.ontouchstart(self)
-		// 	# ptr.event.preventDefault unless @native
-		// 	# prevent default?
-		
-		//  = e:clientX
-		//  = e:clientY
 		return this;
 	};
 	
 	Imba.Touch.prototype.update = function (){
 		if (!this._active) { return this };
+		
+		var dr = Math.sqrt(this.dx() * this.dx() + this.dy() * this.dy());
+		if (dr > this._dr) { this._maxdr = dr };
+		this._dr = dr;
+		
 		// catching a touch-redirect?!?
 		if (this._redirect) {
 			if (this._target && this._target.ontouchcancel) {
@@ -588,7 +616,7 @@
 		
 		this._updates++;
 		if (this._gestures) {
-			for (var i=0, ary=iter$(this._gestures), len=ary.length; i < len; i++) {
+			for (var i = 0, ary = iter$(this._gestures), len = ary.length; i < len; i++) {
 				ary[i].ontouchupdate(this);
 			};
 		};
@@ -601,7 +629,7 @@
 		if (!this._active) { return this };
 		
 		if (this._gestures) {
-			for (var i=0, ary=iter$(this._gestures), len=ary.length, g; i < len; i++) {
+			for (var i = 0, ary = iter$(this._gestures), len = ary.length, g; i < len; i++) {
 				g = ary[i];
 				if (g.ontouchmove) { g.ontouchmove(this,this._event) };
 			};
@@ -617,18 +645,13 @@
 		this._updates++;
 		
 		if (this._gestures) {
-			for (var i=0, ary=iter$(this._gestures), len=ary.length; i < len; i++) {
+			for (var i = 0, ary = iter$(this._gestures), len = ary.length; i < len; i++) {
 				ary[i].ontouchend(this);
 			};
 		};
 		
 		if (this.target() && this.target().ontouchend) { this.target().ontouchend(this) };
 		
-		// simulate tap -- need to be careful about this(!)
-		// must look at timing and movement(!)
-		if (this._touch) {
-			ED.trigger('tap',this.event().target);
-		};
 		return this;
 	};
 	
@@ -636,22 +659,21 @@
 		return this;
 	};
 	
+	Imba.Touch.prototype.dr = function (){
+		return this._dr;
+	};
 	Imba.Touch.prototype.dx = function (){
 		return this._x - this._x0;
-		// pointer.x - @x0
 	};
-	
 	Imba.Touch.prototype.dy = function (){
 		return this._y - this._y0;
-		// pointer.y - @y0
 	};
-	
 	Imba.Touch.prototype.x = function (){
 		return this._x;
-	}; // pointer.x
+	};
 	Imba.Touch.prototype.y = function (){
 		return this._y;
-	}; // pointer.y
+	};
 	
 	Imba.Touch.prototype.button = function (){
 		return this._pointer ? (this._pointer.button()) : (0);
@@ -759,8 +781,17 @@
 		return new this(e);
 	};
 	
+	Imba.Event.prototype.setType = function (type){
+		this._type = type;
+		return this;
+	};
+	
+	Imba.Event.prototype.type = function (){
+		return this._type || this.event().type;
+	};
+	
 	Imba.Event.prototype.name = function (){
-		return this.event().type.toLowerCase().replace(/\:/g,'');
+		return this._name || (this._name = this.type().toLowerCase().replace(/\:/g,''));
 	};
 	
 	// mimc getset
@@ -779,7 +810,12 @@
 	
 	Imba.Event.prototype.cancel = function (){
 		if (this.event().preventDefault) { this.event().preventDefault() };
+		this._cancel = true;
 		return this;
+	};
+	
+	Imba.Event.prototype.isPrevented = function (){
+		return this.event() && this.event().defaultPrevented || this._cancel;
 	};
 	
 	Imba.Event.prototype.target = function (){
@@ -834,12 +870,14 @@
 		var domnode = domtarget._responder || domtarget;
 		var rerouter = null;
 		var rerouted = false;
+		
 		// need to stop infinite redirect-rules here??!?
+		
 		var $1;while (domnode){
 			this._redirect = null;
 			if (node = tag$wrap(domnode)) { // not only tag 
 				
-				if ((typeof node[($1=meth)]=='string'||node[$1] instanceof String)) {
+				if ((typeof node[($1 = meth)]=='string'||node[$1] instanceof String)) {
 					// should remember the receiver of the event
 					meth = node[meth];
 					continue;
@@ -852,15 +890,24 @@
 				};
 				
 				if (node[meth] instanceof Function) {
+					this._responder || (this._responder = node);
+					// should autostop bubble here?
 					var res = args ? (node[meth].apply(node,args)) : (node[meth](this,this.data()));
 				};
 			};
 			
-			// log "hit?",domnode
 			// add node.nextEventResponder as a separate method here?
-			if (!(this.bubble() && (domnode = (this._redirect || (node ? (node.parent()) : (domnode.parentNode)))))) { break };
+			if (!(this.bubble() && (domnode = (this._redirect || (node ? (node.parent()) : (domnode.parentNode)))))) {
+				break;
+			};
 		};
 		
+		this.processed();
+		return this;
+	};
+	
+	Imba.Event.prototype.processed = function (){
+		Imba.emit(Imba,'event',[this]);
 		return this;
 	};
 	
@@ -875,10 +922,11 @@
 	};
 	
 	Imba.EventManager = function EventManager(node,pars){
-		var self=this;
+		var self = this;
 		if(!pars||pars.constructor !== Object) pars = {};
 		var events = pars.events !== undefined ? pars.events : [];
 		self.setRoot(node);
+		self.setCount(0);
 		self.setListeners([]);
 		self.setDelegators({});
 		self.setDelegator(function(e) {
@@ -887,7 +935,7 @@
 			return true;
 		});
 		
-		for (var i=0, ary=iter$(events), len=ary.length; i < len; i++) {
+		for (var i = 0, ary = iter$(events), len = ary.length; i < len; i++) {
 			self.register(ary[i]);
 		};
 		self;
@@ -897,6 +945,10 @@
 	Imba.EventManager.prototype.__root = {name: 'root'};
 	Imba.EventManager.prototype.root = function(v){ return this._root; }
 	Imba.EventManager.prototype.setRoot = function(v){ this._root = v; return this; };
+	
+	Imba.EventManager.prototype.__count = {name: 'count'};
+	Imba.EventManager.prototype.count = function(v){ return this._count; }
+	Imba.EventManager.prototype.setCount = function(v){ this._count = v; return this; };
 	
 	Imba.EventManager.prototype.__enabled = {'default': false,watch: 'enabledDidSet',name: 'enabled'};
 	Imba.EventManager.prototype.enabled = function(v){ return this._enabled; }
@@ -925,11 +977,10 @@
 		return this;
 	};
 	
-	
 	Imba.EventManager.prototype.register = function (name,handler){
 		if(handler === undefined) handler = true;
 		if (name instanceof Array) {
-			for (var i=0, ary=iter$(name), len=ary.length; i < len; i++) {
+			for (var i = 0, ary = iter$(name), len = ary.length; i < len; i++) {
 				this.register(ary[i],handler);
 			};
 			return this;
@@ -949,13 +1000,10 @@
 	};
 	
 	Imba.EventManager.prototype.delegate = function (e){
-		// console.log "delegate event {e and e:type}"
-		// really? wrap all events? Quite expensive unless we reuse them
+		var $1, v_;
+		((this.setCount(v_ = this.count() + 1),v_)) - 1;
 		var event = Imba.Event.wrap(e);
-		// console.log "delegate event {e:type}"
 		event.process();
-		// name = e:type.toLowerCase.replace(/\:/g,'')
-		// create our own event here?
 		return this;
 	};
 	
@@ -970,40 +1018,17 @@
 	};
 	
 	// use create instead?
-	Imba.EventManager.prototype.trigger = function (type,target,pars){
-		if(!pars||pars.constructor !== Object) pars = {};
-		var data = pars.data !== undefined ? pars.data : null;
-		var source = pars.source !== undefined ? pars.source : null;
-		var event = Imba.Event.wrap({type: type,target: target});
-		if (data) { (event.setData(data),data) };
-		if (source) { (event.setSource(source),source) };
-		return event.process();
-	};
-	
-	Imba.EventManager.prototype.emit = function (obj,event,data,pars){
-		// log "emit event for",obj,event,data
-		if(!pars||pars.constructor !== Object) pars = {};
-		var dom = pars.dom !== undefined ? pars.dom : true;
-		var ns = pars.ns !== undefined ? pars.ns : 'object';
-		var fn = ("on" + ns);
-		var nodes = DOC.querySelectorAll(("." + (obj.uid())));
-		for (var i=0, ary=iter$(nodes), len=ary.length, node; i < len; i++) {
-			// log "found node {node:className}"
-			node = ary[i];
-			if (node._tag && node._tag[fn]) {
-				node._tag[fn](event,data);
-			};
-			// now we simply link to onobject event
-		};
-		return this;
+	Imba.EventManager.prototype.trigger = function (){
+		var $1;
+		return this.create.apply(this,arguments).process();
 	};
 	
 	Imba.EventManager.prototype.onenable = function (){
-		for (var o=this.delegators(), i=0, keys=Object.keys(o), l=keys.length; i < l; i++){
+		for (var o = this.delegators(), i = 0, keys = Object.keys(o), l = keys.length; i < l; i++){
 			this.root().addEventListener(keys[i],o[keys[i]],true);
 		};
 		
-		for (var j=0, ary=iter$(this.listeners()), len=ary.length, item; j < len; j++) {
+		for (var j = 0, ary = iter$(this.listeners()), len = ary.length, item; j < len; j++) {
 			item = ary[j];
 			this.root().addEventListener(item[0],item[1],item[2]);
 		};
@@ -1011,11 +1036,11 @@
 	};
 	
 	Imba.EventManager.prototype.ondisable = function (){
-		for (var o=this.delegators(), i=0, keys=Object.keys(o), l=keys.length; i < l; i++){
+		for (var o = this.delegators(), i = 0, keys = Object.keys(o), l = keys.length; i < l; i++){
 			this.root().removeEventListener(keys[i],o[keys[i]],true);
 		};
 		
-		for (var j=0, ary=iter$(this.listeners()), len=ary.length, item; j < len; j++) {
+		for (var j = 0, ary = iter$(this.listeners()), len = ary.length, item; j < len; j++) {
 			item = ary[j];
 			this.root().removeEventListener(item[0],item[1],item[2]);
 		};
@@ -1025,36 +1050,74 @@
 	
 	ED = Imba.Events = new Imba.EventManager(document,{events: [
 		'keydown','keyup','keypress','textInput','input','change','submit',
-		'focusin','focusout','blur','contextmenu',
-		'mousedown','mouseup','mousewheel',
-		'dblclick'
+		'focusin','focusout','blur','contextmenu','dblclick',
+		'mousewheel','wheel'
 	]});
 	
+	// should set these up inside the Imba.Events object itself
+	// so that we can have different EventManager for different roots
+	
 	if (hasTouchEvents) {
-		ED.listen('touchstart',function(e) { return Imba.Touch.ontouchstart(e); });
-		ED.listen('touchmove',function(e) { return Imba.Touch.ontouchmove(e); });
-		ED.listen('touchend',function(e) { return Imba.Touch.ontouchend(e); });
-		ED.listen('touchcancel',function(e) { return Imba.Touch.ontouchcancel(e); });
-	} else {
-		ED.listen('click',function(e) {
-			return ED.trigger('tap',e.target); // no
+		Imba.Events.listen('touchstart',function(e) {
+			var Events_, v_;
+			(((Events_ = Imba.Events).setCount(v_ = Events_.count() + 1),v_)) - 1;
+			return Imba.Touch.ontouchstart(e);
 		});
 		
-		ED.listen('mousedown',function(e) {
-			if (Imba.POINTER) { return Imba.POINTER.update(e).process() };
+		Imba.Events.listen('touchmove',function(e) {
+			var Events_, v_;
+			(((Events_ = Imba.Events).setCount(v_ = Events_.count() + 1),v_)) - 1;
+			return Imba.Touch.ontouchmove(e);
 		});
 		
-		ED.listen('mousemove',function(e) {
-			if (Imba.POINTER) { return Imba.POINTER.update(e).process() }; // .process if touch # should not happen? We process through 
+		Imba.Events.listen('touchend',function(e) {
+			var Events_, v_;
+			(((Events_ = Imba.Events).setCount(v_ = Events_.count() + 1),v_)) - 1;
+			return Imba.Touch.ontouchend(e);
 		});
 		
-		ED.listen('mouseup',function(e) {
-			if (Imba.POINTER) { return Imba.POINTER.update(e).process() };
+		Imba.Events.listen('touchcancel',function(e) {
+			var Events_, v_;
+			(((Events_ = Imba.Events).setCount(v_ = Events_.count() + 1),v_)) - 1;
+			return Imba.Touch.ontouchcancel(e);
 		});
 	};
 	
-	// enable immediately by default
-	Imba.Events.setEnabled(true);
+	Imba.Events.register('click',function(e) {
+		
+		if ((e.timeStamp - lastNativeTouchTimeStamp) > lastNativeTouchTimeout) {
+			var tap = new Imba.Event(e);
+			tap.setType('tap');
+			tap.process();
+			if (tap._responder) {
+				return e.preventDefault();
+			};
+		};
+		// delegate the real click event
+		return Imba.Events.delegate(e);
+	});
+	
+	Imba.Events.listen('mousedown',function(e) {
+		if ((e.timeStamp - lastNativeTouchTimeStamp) > lastNativeTouchTimeout) {
+			if (Imba.POINTER) { return Imba.POINTER.update(e).process() };
+		};
+	});
+	
+	// Imba.Events.listen(:mousemove) do |e|
+	// 	# console.log 'mousemove',e:timeStamp
+	// 	if (e:timeStamp - lastNativeTouchTimeStamp) > lastNativeTouchTimeout
+	// 		Imba.POINTER.update(e).process if Imba.POINTER # .process if touch # should not happen? We process through 
+	
+	Imba.Events.listen('mouseup',function(e) {
+		// console.log 'mouseup',e:timeStamp
+		if ((e.timeStamp - lastNativeTouchTimeStamp) > lastNativeTouchTimeout) {
+			if (Imba.POINTER) { return Imba.POINTER.update(e).process() };
+		};
+	});
+	
+	
+	Imba.Events.register(['mousedown','mouseup']);
+	return (Imba.Events.setEnabled(true),true);
 
 })()
 },{}],5:[function(require,module,exports){
@@ -1126,7 +1189,27 @@
 		tag.prototype.setDisabled = function(v){ this.setAttribute('disabled',v); return this; };
 	});
 	
-	Imba.defineTag('canvas');
+	Imba.defineTag('canvas', function(tag){
+		tag.prototype.setWidth = function (val){
+			if (this.width() != val) { this.dom().width = val };
+			return this;
+		};
+		
+		tag.prototype.setHeight = function (val){
+			if (this.height() != val) { this.dom().height = val };
+			return this;
+		};
+		
+		tag.prototype.width = function (){
+			return this.dom().width;
+		};
+		
+		tag.prototype.height = function (){
+			return this.dom().height;
+		};
+	});
+	
+	
 	Imba.defineTag('caption');
 	Imba.defineTag('cite');
 	Imba.defineTag('code');
@@ -1222,7 +1305,12 @@
 		};
 		
 		tag.prototype.setValue = function (v){
-			this.dom().value = v;
+			if (v != this.dom().value) { this.dom().value = v };
+			return this;
+		};
+		
+		tag.prototype.setPlaceholder = function (v){
+			if (v != this.dom().placeholder) { this.dom().placeholder = v };
 			return this;
 		};
 		
@@ -1231,7 +1319,7 @@
 		};
 		
 		tag.prototype.setChecked = function (bool){
-			this.dom().checked = bool;
+			if (bool != this.dom().checked) { this.dom().checked = bool };
 			return this;
 		};
 	});
@@ -1333,7 +1421,7 @@
 		};
 		
 		tag.prototype.setValue = function (v){
-			this.dom().value = v;
+			if (v != this.dom().value) { this.dom().value = v };
 			return this;
 		};
 	});
@@ -1391,7 +1479,12 @@
 		};
 		
 		tag.prototype.setValue = function (v){
-			this.dom().value = v;
+			if (v != this.dom().value) { this.dom().value = v };
+			return this;
+		};
+		
+		tag.prototype.setPlaceholder = function (v){
+			if (v != this.dom().placeholder) { this.dom().placeholder = v };
 			return this;
 		};
 	});
@@ -1406,820 +1499,651 @@
 	Imba.defineTag('u');
 	Imba.defineTag('ul');
 	Imba.defineTag('video');
-	Imba.defineTag('wbr');
+	return Imba.defineTag('wbr');
 
 })()
 },{}],6:[function(require,module,exports){
-(function (global){
 (function(){
-	function idx$(a,b){
-		return (b && b.indexOf) ? b.indexOf(a) : [].indexOf.call(a,b);
-	};
-	
-	// helper for subclassing
-	function subclass$(obj,sup) {
-		for (var k in sup) {
-			if (sup.hasOwnProperty(k)) obj[k] = sup[k];
-		};
-		// obj.__super__ = sup;
-		obj.prototype = Object.create(sup.prototype);
-		obj.__super__ = obj.prototype.__super__ = sup.prototype;
-		obj.prototype.initialize = obj.prototype.constructor = obj;
-	};
-	
 	function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 	
-	var svgSupport = typeof SVGElement !== 'undefined';
+	var ElementTag = require('./tag').ElementTag;
 	
 	Imba.document = function (){
 		return window.document;
 	};
 	
-	Imba.static = function (items,nr){
-		items.static = nr;
-		return items;
-	};
-	
-	
-	function ElementTag(dom){
-		this.setDom(dom);
-		this;
-	};
-	
-	global.ElementTag = ElementTag; // global class 
-	
-	ElementTag.prototype.__object = {name: 'object'};
-	ElementTag.prototype.object = function(v){ return this._object; }
-	ElementTag.prototype.setObject = function(v){ this._object = v; return this; };
-	
-	ElementTag.prototype.dom = function (){
-		return this._dom;
-	};
-	
-	ElementTag.prototype.setDom = function (dom){
-		dom._tag = this;
-		this._dom = dom;
-		return this;
-	};
-	
-	ElementTag.prototype.setRef = function (ref){
-		this.flag(this._ref = ref);
-		return this;
-	};
-	
-	ElementTag.prototype.setHandler = function (event,handler,ctx){
-		var key = 'on' + event;
-		
-		if (handler instanceof Function) {
-			this[key] = handler;
-		} else if (handler instanceof Array) {
-			var fn = handler.shift();
-			this[key] = function(e) { return ctx[fn].apply(ctx,handler.concat(e)); };
-		} else {
-			this[key] = function(e) { return ctx[handler](e); };
-		};
-		return this;
-	};
-	
-	ElementTag.prototype.setId = function (id){
-		this.dom().id = id;
-		return this;
-	};
-	
-	ElementTag.prototype.id = function (){
-		return this.dom().id;
-	};
-	
-	ElementTag.prototype.setAttribute = function (key,new$){
-		var old = this.dom().getAttribute(key);
-		
-		if (old == new$) {
-			return new$;
-		} else if (new$ != null && new$ !== false) {
-			return this.dom().setAttribute(key,new$);
-		} else {
-			return this.dom().removeAttribute(key);
-		};
-	};
-	
-	ElementTag.prototype.removeAttribute = function (key){
-		return this.dom().removeAttribute(key);
-	};
-	
-	ElementTag.prototype.getAttribute = function (key){
-		return this.dom().getAttribute(key);
-	};
-	
-	ElementTag.prototype.setContent = function (content){
-		this.setChildren(content); // override?
-		return this;
-	};
-	
-	ElementTag.prototype.setChildren = function (nodes){
-		this._empty ? (this.append(nodes)) : (this.empty().append(nodes));
-		this._children = null;
-		return this;
-	};
-	
-	ElementTag.prototype.text = function (v){
-		if (arguments.length) { return ((this.setText(v),v),this) };
-		return this._dom.textContent;
-	};
-	
-	ElementTag.prototype.setText = function (txt){
-		this._empty = false;
-		this._dom.textContent = txt == null ? (txt = "") : (txt);
-		return this;
-	};
-	
-	ElementTag.prototype.empty = function (){
-		while (this._dom.firstChild){
-			this._dom.removeChild(this._dom.firstChild);
-		};
-		this._children = null;
-		this._empty = true;
-		return this;
-	};
-	
-	ElementTag.prototype.remove = function (node){
-		var par = this.dom();
-		var el = node && node.dom();
-		if (el && el.parentNode == par) { par.removeChild(el) };
-		return this;
-	};
-	
-	ElementTag.prototype.parent = function (){
-		return tag$wrap(this.dom().parentNode);
-	};
-	
-	
-	ElementTag.prototype.log = function (){
-		var $0 = arguments, i = $0.length;
-		var args = new Array(i>0 ? i : 0);
-		while(i>0) args[i-1] = $0[--i];
-		args.unshift(console);
-		Function.prototype.call.apply(console.log,args);
-		return this;
-	};
-	
-	ElementTag.prototype.emit = function (name,pars){
-		if(!pars||pars.constructor !== Object) pars = {};
-		var data = pars.data !== undefined ? pars.data : null;
-		var bubble = pars.bubble !== undefined ? pars.bubble : true;
-		Imba.Events.trigger(name,this,{data: data,bubble: bubble});
-		return this;
-	};
-	
-	ElementTag.prototype.css = function (key,val){
-		if (key instanceof Object) {
-			for (var i=0, keys=Object.keys(key), l=keys.length; i < l; i++){
-				this.css(keys[i],key[keys[i]]);
+	Imba.defineTag('htmlelement','element', function(tag){
+		tag.inherit = function (child){
+			child.prototype._empty = true;
+			child._protoDom = null;
+			
+			if (this._nodeType) {
+				child._nodeType = this._nodeType;
+				
+				var className = "_" + child._name.replace(/_/g,'-');
+				return child._classes = this._classes.concat(className);
+			} else {
+				child._nodeType = child._name;
+				return child._classes = [];
 			};
-		} else if (val == null) {
-			this.dom().style.removeProperty(key);
-		} else if (val == undefined) {
-			return this.dom().style[key];
-		} else {
-			if ((typeof val=='number'||val instanceof Number) && key.match(/width|height|left|right|top|bottom/)) {
-				val = val + "px";
+		};
+		
+		tag.buildNode = function (){
+			var dom = Imba.document().createElement(this._nodeType);
+			var cls = this._classes.join(" ");
+			if (cls) { dom.className = cls };
+			return dom;
+		};
+		
+		tag.createNode = function (){
+			var proto = (this._protoDom || (this._protoDom = this.buildNode()));
+			return proto.cloneNode(false);
+		};
+		
+		tag.dom = function (){
+			return this._protoDom || (this._protoDom = this.buildNode());
+		};
+		
+		tag.prototype.setChildren = function (nodes){
+			this._empty ? (this.append(nodes)) : (this.empty().append(nodes));
+			this._children = null;
+			return this;
+		};
+		
+		tag.prototype.text = function (v){
+			if (arguments.length) { return ((this.setText(v),v),this) };
+			return this._dom.textContent;
+		};
+		
+		tag.prototype.setText = function (txt){
+			this._empty = false;
+			this._dom.textContent = txt == null ? (txt = "") : (txt);
+			return this;
+		};
+		
+		tag.prototype.empty = function (){
+			while (this._dom.firstChild){
+				this._dom.removeChild(this._dom.firstChild);
 			};
-			this.dom().style[key] = val;
-		};
-		return this;
-	};
-	
-	// selectors / traversal
-	ElementTag.prototype.find = function (sel){
-		return new Imba.Selector(sel,this);
-	};
-	
-	ElementTag.prototype.first = function (sel){
-		return sel ? (this.find(sel).first()) : (tag$wrap(this.dom().firstElementChild));
-	};
-	
-	ElementTag.prototype.last = function (sel){
-		return sel ? (this.find(sel).last()) : (tag$wrap(this.dom().lastElementChild));
-	};
-	
-	ElementTag.prototype.child = function (i){
-		return tag$wrap(this.dom().children[i || 0]);
-	};
-	
-	ElementTag.prototype.children = function (sel){
-		var nodes = new Imba.Selector(null,this,this._dom.children);
-		return sel ? (nodes.filter(sel)) : (nodes);
-	};
-	
-	ElementTag.prototype.orphanize = function (){
-		var par;
-		if (par = this.dom().parentNode) { par.removeChild(this._dom) };
-		return this;
-	};
-	
-	ElementTag.prototype.matches = function (sel){
-		var fn;
-		if (sel instanceof Function) {
-			return sel(this);
+			this._children = null;
+			this._empty = true;
+			return this;
 		};
 		
-		if (sel.query) { sel = sel.query() };
-		if (fn = (this._dom.webkitMatchesSelector || this._dom.matches)) { return fn.call(this._dom,sel) };
-		// TODO support other browsers etc?
-	};
-	
-	ElementTag.prototype.closest = function (sel){
-		if (!sel) { return this.parent() }; // should return self?!
-		var node = this;
-		if (sel.query) { sel = sel.query() };
-		
-		while (node){
-			if (node.matches(sel)) { return node };
-			node = node.parent();
+		tag.prototype.remove = function (node){
+			var par = this.dom();
+			var el = node && node.dom();
+			if (el && el.parentNode == par) { par.removeChild(el) };
+			return this;
 		};
-		return null;
-	};
-	
-	ElementTag.prototype.path = function (sel){
-		var node = this;
-		var nodes = [];
-		if (sel && sel.query) { sel = sel.query() };
 		
-		while (node){
-			if (!sel || node.matches(sel)) { nodes.push(node) };
-			node = node.parent();
+		tag.prototype.parent = function (){
+			return tag$wrap(this.dom().parentNode);
 		};
-		return nodes;
-	};
-	
-	ElementTag.prototype.parents = function (sel){
-		var par = this.parent();
-		return par ? (par.path(sel)) : ([]);
-	};
-	
-	ElementTag.prototype.up = function (sel){
-		if (!sel) { return this.parent() };
-		return this.parent() && this.parent().closest(sel);
-	};
-	
-	ElementTag.prototype.siblings = function (sel){
-		var par, self=this;
-		if (!(par = this.parent())) { return [] }; // FIXME
-		var ary = this.dom().parentNode.children;
-		var nodes = new Imba.Selector(null,this,ary);
-		return nodes.filter(function(n) { return n != self && (!sel || n.matches(sel)); });
-	};
-	
-	ElementTag.prototype.next = function (sel){
-		if (sel) {
-			var el = this;
-			while (el = el.next()){
-				if (el.matches(sel)) { return el };
+		
+		tag.prototype.log = function (){
+			var $0 = arguments, i = $0.length;
+			var args = new Array(i>0 ? i : 0);
+			while(i>0) args[i-1] = $0[--i];
+			args.unshift(console);
+			Function.prototype.call.apply(console.log,args);
+			return this;
+		};
+		
+		tag.prototype.emit = function (name,pars){
+			if(!pars||pars.constructor !== Object) pars = {};
+			var data = pars.data !== undefined ? pars.data : null;
+			var bubble = pars.bubble !== undefined ? pars.bubble : true;
+			Imba.Events.trigger(name,this,{data: data,bubble: bubble});
+			return this;
+		};
+		
+		tag.prototype.css = function (key,val){
+			if (key instanceof Object) {
+				for (var i = 0, keys = Object.keys(key), l = keys.length; i < l; i++){
+					this.css(keys[i],key[keys[i]]);
+				};
+			} else if (val == null) {
+				this.dom().style.removeProperty(key);
+			} else if (val == undefined) {
+				return this.dom().style[key];
+			} else {
+				if ((typeof val=='number'||val instanceof Number) && key.match(/width|height|left|right|top|bottom/)) {
+					val = val + "px";
+				};
+				this.dom().style[key] = val;
+			};
+			return this;
+		};
+		
+		tag.prototype.dataset = function (key,val){
+			if (key instanceof Object) {
+				for (var i = 0, keys = Object.keys(key), l = keys.length; i < l; i++){
+					this.dataset(keys[i],key[keys[i]]);
+				};
+				return this;
+			};
+			
+			if (arguments.length == 2) {
+				this.setAttribute(("data-" + key),val);
+				return this;
+			};
+			
+			if (key) {
+				return this.getAttribute(("data-" + key));
+			};
+			
+			var dataset = this.dom().dataset;
+			
+			if (!dataset) {
+				dataset = {};
+				for (var i1 = 0, ary = iter$(this.dom().attributes), len = ary.length, atr; i1 < len; i1++) {
+					atr = ary[i1];
+					if (atr.name.substr(0,5) == 'data-') {
+						dataset[Imba.toCamelCase(atr.name.slice(5))] = atr.value;
+					};
+				};
+			};
+			
+			return dataset;
+		};
+		
+		// selectors / traversal
+		tag.prototype.find = function (sel){
+			return new Imba.Selector(sel,this);
+		};
+		
+		tag.prototype.first = function (sel){
+			return sel ? (this.find(sel).first()) : (tag$wrap(this.dom().firstElementChild));
+		};
+		
+		tag.prototype.last = function (sel){
+			return sel ? (this.find(sel).last()) : (tag$wrap(this.dom().lastElementChild));
+		};
+		
+		tag.prototype.child = function (i){
+			return tag$wrap(this.dom().children[i || 0]);
+		};
+		
+		tag.prototype.children = function (sel){
+			var nodes = new Imba.Selector(null,this,this._dom.children);
+			return sel ? (nodes.filter(sel)) : (nodes);
+		};
+		
+		tag.prototype.orphanize = function (){
+			var par;
+			if (par = this.dom().parentNode) { par.removeChild(this._dom) };
+			return this;
+		};
+		
+		tag.prototype.matches = function (sel){
+			var fn;
+			if (sel instanceof Function) {
+				return sel(this);
+			};
+			
+			if (sel.query) { sel = sel.query() };
+			if (fn = (this._dom.webkitMatchesSelector || this._dom.matches)) { return fn.call(this._dom,sel) };
+			// TODO support other browsers etc?
+		};
+		
+		tag.prototype.closest = function (sel){
+			if (!sel) { return this.parent() }; // should return self?!
+			var node = this;
+			if (sel.query) { sel = sel.query() };
+			
+			while (node){
+				if (node.matches(sel)) { return node };
+				node = node.parent();
 			};
 			return null;
 		};
-		return tag$wrap(this.dom().nextElementSibling);
-	};
-	
-	ElementTag.prototype.prev = function (sel){
-		if (sel) {
-			var el = this;
-			while (el = el.prev()){
-				if (el.matches(sel)) { return el };
+		
+		tag.prototype.path = function (sel){
+			var node = this;
+			var nodes = [];
+			if (sel && sel.query) { sel = sel.query() };
+			
+			while (node){
+				if (!sel || node.matches(sel)) { nodes.push(node) };
+				node = node.parent();
 			};
+			return nodes;
+		};
+		
+		tag.prototype.parents = function (sel){
+			var par = this.parent();
+			return par ? (par.path(sel)) : ([]);
+		};
+		
+		tag.prototype.up = function (sel){
+			if (!sel) { return this.parent() };
+			return this.parent() && this.parent().closest(sel);
+		};
+		
+		tag.prototype.siblings = function (sel){
+			var par, self = this;
+			if (!(par = this.parent())) { return [] }; // FIXME
+			var ary = this.dom().parentNode.children;
+			var nodes = new Imba.Selector(null,this,ary);
+			return nodes.filter(function(n) { return n != self && (!sel || n.matches(sel)); });
+		};
+		
+		tag.prototype.next = function (sel){
+			if (sel) {
+				var el = this;
+				while (el = el.next()){
+					if (el.matches(sel)) { return el };
+				};
+				return null;
+			};
+			return tag$wrap(this.dom().nextElementSibling);
+		};
+		
+		tag.prototype.prev = function (sel){
+			if (sel) {
+				var el = this;
+				while (el = el.prev()){
+					if (el.matches(sel)) { return el };
+				};
+				return null;
+			};
+			return tag$wrap(this.dom().previousElementSibling);
+		};
+		
+		tag.prototype.contains = function (node){
+			return this.dom().contains(node && node._dom || node);
+		};
+		
+		tag.prototype.index = function (){
+			var i = 0;
+			var el = this.dom();
+			while (el.previousSibling){
+				el = el.previousSibling;
+				i++;
+			};
+			return i;
+		};
+		
+		
+		tag.prototype.insert = function (node,pars){
+			if(!pars||pars.constructor !== Object) pars = {};
+			var before = pars.before !== undefined ? pars.before : null;
+			var after = pars.after !== undefined ? pars.after : null;
+			if (after) { before = after.next() };
+			if (node instanceof Array) {
+				node = (t$('fragment').setContent(node,0).end());
+			};
+			if (before) {
+				this.dom().insertBefore(node.dom(),before.dom());
+			} else {
+				this.append(node);
+			};
+			return this;
+		};
+		
+		tag.prototype.focus = function (){
+			this.dom().focus();
+			return this;
+		};
+		
+		tag.prototype.blur = function (){
+			this.dom().blur();
+			return this;
+		};
+		
+		tag.prototype.template = function (){
 			return null;
 		};
-		return tag$wrap(this.dom().previousElementSibling);
-	};
-	
-	ElementTag.prototype.contains = function (node){
-		return this.dom().contains(node && node._dom || node);
-	};
-	
-	ElementTag.prototype.index = function (){
-		var i = 0;
-		var el = this.dom();
-		while (el.previousSibling){
-			el = el.previousSibling;
-			i++;
-		};
-		return i;
-	};
-	
-	
-	ElementTag.prototype.insert = function (node,pars){
-		if(!pars||pars.constructor !== Object) pars = {};
-		var before = pars.before !== undefined ? pars.before : null;
-		var after = pars.after !== undefined ? pars.after : null;
-		if (after) { before = after.next() };
-		if (node instanceof Array) {
-			node = (t$('fragment').setContent(node).end());
-		};
-		if (before) {
-			this.dom().insertBefore(node.dom(),before.dom());
-		} else {
-			this.append(node);
-		};
-		return this;
-	};
-	
-	
-	// bind / present
-	// should deprecate / remove
-	ElementTag.prototype.bind = function (obj){
-		this.setObject(obj);
-		return this;
-	};
-	
-	ElementTag.prototype.render = function (){
-		return this;
-	};
-	
-	ElementTag.prototype.build = function (){
-		this.render();
-		return this;
-	};
-	
-	ElementTag.prototype.commit = function (){
-		return this;
-	};
-	
-	ElementTag.prototype.end = function (){
-		if (this._built) {
-			this.commit();
-		} else {
-			this._built = true;
-			this.build();
-		};
-		return this;
-	};
-	
-	// called whenever a node has rendered itself like in <self> <div> ...
-	ElementTag.prototype.synced = function (){
-		return this;
-	};
-	
-	// called when the node is awakened in the dom - either automatically
-	// upon attachment to the dom-tree, or the first time imba needs the
-	// tag for a domnode that has been rendered on the server
-	ElementTag.prototype.awaken = function (){
-		return this;
-	};
-	
-	ElementTag.prototype.focus = function (){
-		this.dom().focus();
-		return this;
-	};
-	
-	ElementTag.prototype.blur = function (){
-		this.dom().blur();
-		return this;
-	};
-	
-	ElementTag.prototype.template = function (){
-		return null;
-	};
-	
-	ElementTag.prototype.prepend = function (item){
-		return this.insert(item,{before: this.first()});
-	};
-	
-	ElementTag.prototype.append = function (item){
-		// possible to append blank
-		// possible to simplify on server?
-		if (!item) { return this };
 		
-		if (item instanceof Array) {
-			for (var i=0, ary=iter$(item), len=ary.length, member; i < len; i++) {
-				member = ary[i];
-				member && this.append(member);
+		tag.prototype.prepend = function (item){
+			var first = this._dom.childNodes[0];
+			first ? (this.insertBefore(item,first)) : (this.appendChild(item));
+			return this;
+		};
+		
+		tag.prototype.append = function (item){
+			// possible to append blank
+			// possible to simplify on server?
+			if (!item) { return this };
+			
+			if (item instanceof Array) {
+				for (var i = 0, ary = iter$(item), len = ary.length, member; i < len; i++) {
+					member = ary[i];
+					member && this.append(member);
+				};
+			} else if ((typeof item=='string'||item instanceof String) || (typeof item=='number'||item instanceof Number)) {
+				var node = Imba.document().createTextNode(item);
+				this._dom.appendChild(node);
+				if (this._empty) { this._empty = false };
+			} else {
+				this._dom.appendChild(item._dom || item);
+				if (this._empty) { this._empty = false };
 			};
-		} else if ((typeof item=='string'||item instanceof String) || (typeof item=='number'||item instanceof Number)) {
-			var node = Imba.document().createTextNode(item);
-			this._dom.appendChild(node);
-			if (this._empty) { this._empty = false };
-		} else {
-			this._dom.appendChild(item._dom || item);
-			if (this._empty) { this._empty = false };
+			
+			return this;
 		};
 		
-		return this;
-	};
-	
-	
-	ElementTag.prototype.insertBefore = function (node,rel){
-		if ((typeof node=='string'||node instanceof String)) { node = Imba.document().createTextNode(node) };
-		if (node && rel) { this.dom().insertBefore((node._dom || node),(rel._dom || rel)) };
-		return this;
-	};
-	
-	ElementTag.prototype.appendChild = function (node){
-		if ((typeof node=='string'||node instanceof String)) { node = Imba.document().createTextNode(node) };
-		if (node) { this.dom().appendChild(node._dom || node) };
-		return this;
-	};
-	
-	ElementTag.prototype.removeChild = function (node){
-		if (node) { this.dom().removeChild(node._dom || node) };
-		return this;
-	};
-	
-	ElementTag.prototype.toString = function (){
-		return this._dom.toString(); // really?
-	};
-	
-	ElementTag.prototype.classes = function (){
-		return this._dom.classList;
-	};
-	
-	ElementTag.prototype.flags = function (){
-		return this._dom.classList;
-	};
-	
-	ElementTag.prototype.flag = function (ref,toggle){
-		// it is most natural to treat a second undefined argument as a no-switch
-		// so we need to check the arguments-length
-		if (arguments.length == 2 && !toggle) {
+		
+		tag.prototype.insertBefore = function (node,rel){
+			if ((typeof node=='string'||node instanceof String)) { node = Imba.document().createTextNode(node) };
+			if (node && rel) { this.dom().insertBefore((node._dom || node),(rel._dom || rel)) };
+			return this;
+		};
+		
+		tag.prototype.appendChild = function (node){
+			if ((typeof node=='string'||node instanceof String)) { node = Imba.document().createTextNode(node) };
+			if (node) { this.dom().appendChild(node._dom || node) };
+			return this;
+		};
+		
+		tag.prototype.removeChild = function (node){
+			if (node) { this.dom().removeChild(node._dom || node) };
+			return this;
+		};
+		
+		tag.prototype.toString = function (){
+			return this._dom.toString(); // really?
+		};
+		
+		tag.prototype.classes = function (){
+			return this._dom.classList;
+		};
+		
+		tag.prototype.flags = function (){
+			return this._dom.classList;
+		};
+		
+		tag.prototype.flag = function (ref,toggle){
+			// it is most natural to treat a second undefined argument as a no-switch
+			// so we need to check the arguments-length
+			if (arguments.length == 2 && !toggle) {
+				this._dom.classList.remove(ref);
+			} else {
+				this._dom.classList.add(ref);
+			};
+			return this;
+		};
+		
+		tag.prototype.unflag = function (ref){
 			this._dom.classList.remove(ref);
-		} else {
-			this._dom.classList.add(ref);
-		};
-		return this;
-	};
-	
-	ElementTag.prototype.unflag = function (ref){
-		this._dom.classList.remove(ref);
-		return this;
-	};
-	
-	ElementTag.prototype.toggleFlag = function (ref){
-		this._dom.classList.toggle(ref);
-		return this;
-	};
-	
-	ElementTag.prototype.hasFlag = function (ref){
-		return this._dom.classList.contains(ref);
-	};
-	
-	ElementTag.dom = function (){
-		if (this._dom) { return this._dom };
-		
-		var dom;
-		var sup = this.__super__.constructor;
-		var proto = this.prototype;
-		
-		// should clone the parent no?
-		if (this._isNative) {
-			this._dom = dom = Imba.document().createElement(this._nodeType);
-		} else if (this._nodeType != sup._nodeType) {
-			this._dom = dom = Imba.document().createElement(this._nodeType);
-			for (var i=0, ary=iter$(sup.dom()), len=ary.length, atr; i < len; i++) {
-				atr = ary[i];
-				dom.setAttribute(atr.name,atr.value);
-			};
-			// dom:className = sup.dom:className
-			// what about default attributes?
-		} else {
-			this._dom = dom = sup.dom().cloneNode(false);
+			return this;
 		};
 		
-		// should be a way to use a native domtype without precreating the doc
-		// and still keeping the classes?
-		if (this._domFlags) {
-			for (var i=0, ary=iter$(this._domFlags), len=ary.length; i < len; i++) {
-				proto.flag.call(this,ary[i]);
-			};
+		tag.prototype.toggleFlag = function (ref){
+			this._dom.classList.toggle(ref);
+			return this;
 		};
 		
-		return this._dom;
-	};
-	
-	
-	// we really ought to optimize this
-	ElementTag.createNode = function (flags,id){
-		var proto = this._dom || this.dom();
-		var dom = proto.cloneNode(false);
-		return dom;
-	};
-	
-	ElementTag.flag = function (flag){
-		// should redirect to the prototype with a dom-node already set?
-		this.dom().classList.add(flag);
-		return this;
-	};
-	
-	ElementTag.unflag = function (flag){
-		this.dom().classList.remove(flag);
-		return this;
-	};
-	
-	ElementTag.createNode = function (flags,id){
-		var proto = this._dom || this.dom();
-		var dom = proto.cloneNode(false);
-		return dom;
-	};
-	
-	ElementTag.prototype.initialize = ElementTag;
-	
-	function HTMLElementTag(){ ElementTag.apply(this,arguments) };
-	
-	subclass$(HTMLElementTag,ElementTag);
-	
-	
-	function SVGElementTag(){ ElementTag.apply(this,arguments) };
-	
-	subclass$(SVGElementTag,ElementTag);
-	
-	
-	
-	HTML_TAGS = "a abbr address area article aside audio b base bdi bdo big blockquote body br button canvas caption cite code col colgroup data datalist dd del details dfn div dl dt em embed fieldset figcaption figure footer form h1 h2 h3 h4 h5 h6 head header hr html i iframe img input ins kbd keygen label legend li link main map mark menu menuitem meta meter nav noscript object ol optgroup option output p param pre progress q rp rt ruby s samp script section select small source span strong style sub summary sup table tbody td textarea tfoot th thead time title tr track u ul var video wbr".split(" ");
-	HTML_TAGS_UNSAFE = "article aside header section".split(" ");
-	SVG_TAGS = "circle defs ellipse g line linearGradient mask path pattern polygon polyline radialGradient rect stop svg text tspan".split(" ");
-	
-	Imba.TAGS = {
-		element: ElementTag,
-		htmlelement: HTMLElementTag,
-		svgelement: SVGElementTag
-	};
-	
-	Imba.SINGLETONS = {};
-	IMBA_TAGS = Imba.TAGS;
-	
-	function extender(obj,sup){
-		for (var i=0, keys=Object.keys(sup), l=keys.length; i < l; i++){
-			obj[keys[i]] = sup[keys[i]];
+		tag.prototype.hasFlag = function (ref){
+			return this._dom.classList.contains(ref);
 		};
-		
-		obj.prototype = Object.create(sup.prototype);
-		obj.__super__ = obj.prototype.__super__ = sup.prototype;
-		obj.prototype.initialize = obj.prototype.constructor = obj;
-		return obj;
-	};
+	});
 	
-	Imba.defineTag = function (name,supr,body){
-		if(body==undefined && typeof supr == 'function') body = supr,supr = '';
-		var m = name.split("$");
-		var name = m[0];
-		var ns = m[1];
-		
-		supr || (supr = (idx$(name,HTML_TAGS) >= 0) ? ('htmlelement') : ('div'));
-		
-		var suprklass = Imba.TAGS[supr];
-		
-		var fname = name == 'var' ? ('vartag') : (name);
-		// should drop this in production / optimized mode, but for debug
-		// we create a constructor with a recognizeable name
-		var Tag = new Function(("return function " + (fname.replace(/[\s\-\:]/g,'_')) + "(dom)\{ this.setDom(dom); \}"))();
-		// var Tag = do |dom| this.setDom(dom)
-		var klass = Tag;
-		
-		extender(klass,suprklass);
-		
-		klass._nodeType = suprklass._nodeType || name;
-		klass._name = name;
-		klass._ns = ns;
-		
-		// add the classes -- if this is not a basic native node?
-		if (klass._nodeType != name) {
-			klass._nodeFlag = "_" + name.replace(/_/g,'-');
-			var nc = suprklass._nodeClass;
-			nc = nc ? (nc.split(/\s+/g)) : ([]);
-			var c = null;
-			if (ns && idx$(c,nc) == -1) { nc.push(c = ("" + ns + "_")) };
-			if (!(idx$(c,nc) >= 0)) { nc.push(c = klass._nodeFlag) };
-			klass._nodeClass = nc.join(" ");
-			klass._domFlags = nc;
-			klass._isNative = false;
-		} else {
-			klass._isNative = true;
-		};
-		
-		klass._dom = null;
-		klass.prototype._nodeType = klass._nodeType;
-		klass.prototype._dom = null;
-		klass.prototype._built = false;
-		klass.prototype._empty = true;
-		// add the default flags / classes for ns etc
-		// if namespaced -- this is dangerous
-		if (!ns) { Imba.TAGS[name] = klass };
-		Imba.TAGS[("" + name + "$" + (ns || 'html'))] = klass;
-		
-		// create the global shortcut for tag init as well
-		if (body) { body.call(klass,klass,klass.prototype) };
-		return klass;
-	};
-	
-	Imba.defineSingletonTag = function (id,supr,body){
-		
-		if(body==undefined && typeof supr == 'function') body = supr,supr = '';
-		var superklass = Imba.TAGS[supr || 'div'];
-		
-		// should drop this in production / optimized mode, but for debug
-		// we create a constructor with a recognizeable name
-		var fun = new Function(("return function " + (id.replace(/[\s\-\:]/g,'_')) + "(dom)\{ this.setDom(dom); \}"));
-		var singleton = fun();
-		
-		var klass = extender(singleton,superklass);
-		
-		klass._id = id;
-		klass._ns = superklass._ns;
-		klass._nodeType = superklass._nodeType;
-		klass._nodeClass = superklass._nodeClass;
-		klass._domFlags = superklass._domFlags;
-		klass._isNative = false;
-		
-		klass._dom = null;
-		klass._instance = null;
-		klass.prototype._dom = null;
-		klass.prototype._built = false;
-		klass.prototype._empty = true;
-		
-		// add the default flags / classes for ns etc
-		// if namespaced -- this is dangerous
-		// console.log('registered singleton')
-		Imba.SINGLETONS[id] = klass;
-		if (body) { body.call(klass,klass,klass.prototype) };
-		return klass;
-	};
-	
-	Imba.extendTag = function (name,body){
-		var klass = ((typeof name=='string'||name instanceof String) ? (Imba.TAGS[name]) : (name));
-		if (body) { body && body.call(klass,klass,klass.prototype) };
-		return klass;
-	};
-	
-	Imba.tag = function (name){
-		var typ = Imba.TAGS[name];
-		return new typ(typ.createNode());
-	};
-	
-	Imba.tagWithId = function (name,id){
-		var typ = Imba.TAGS[name];
-		var dom = typ.createNode();
-		dom.id = id;
-		return new typ(dom);
-	};
-	
-	Imba.getTagSingleton = function (id){
-		var type,node,dom;
-		
-		if (type = Imba.SINGLETONS[id]) {
-			// return basic awakening if singleton does not exist?
-			
-			if (type && type.Instance) { return type.Instance };
-			// no instance - check for element
-			if (dom = Imba.document().getElementById(id)) {
-				// we have a live instance - when finding it through a selector we should awake it, no?
-				// console.log('creating the singleton from existing node in dom?',id,type)
-				node = type.Instance = new type(dom);
-				node.awaken(dom); // should only awaken
-				return node;
-			};
-			
-			dom = type.createNode();
-			dom.id = id;
-			// console.log('creating the singleton',id,type)
-			node = type.Instance = new type(dom);
-			node.end().awaken(dom);
-			return node;
-		} else if (dom = Imba.document().getElementById(id)) {
-			// console.log('found plain element with id')
-			return Imba.getTagForDom(dom);
-		};
-	};
-	
-	
-	
-	Imba.getTagForDom = function (dom){
-		
-		var m;
-		if (!dom) { return null };
-		if (dom._dom) { return dom }; // could use inheritance instead
-		if (dom._tag) { return dom._tag };
-		if (!dom.nodeName) { return null };
-		
-		var ns = null;
-		var id = dom.id;
-		var type = dom.nodeName.toLowerCase();
-		var cls = dom.className;
-		
-		if (id && Imba.SINGLETONS[id]) {
-			// FIXME control that it is the same singleton?
-			// might collide -- not good?
-			return Imba.getTagSingleton(id);
-		};
-		// look for id - singleton
-		
-		// need better test here
-		if (svgSupport && (dom instanceof SVGElement)) {
-			ns = "svg";
-			cls = dom.className.baseVal;
-		};
-		
-		if (cls) {
-			// there can be several matches here - should choose the last
-			// should fall back to less specific later? - otherwise things may fail
-			// TODO rework this
-			if (m = cls.match(/\b_([a-z\-]+)\b(?!\s*_[a-z\-]+)/)) {
-				type = m[1].replace(/-/g,'_');
-			};
-			
-			if (m = cls.match(/\b([a-z]+)_\b/)) {
-				ns = m[1];
-			};
-		};
-		
-		var spawner = Imba.TAGS[type];
-		return spawner ? (new spawner(dom).awaken(dom)) : (null);
-	};
-	
-	t$ = Imba.tag;
-	tc$ = Imba.tagWithFlags;
-	ti$ = Imba.tagWithId;
-	tic$ = Imba.tagWithIdAndFlags;
-	id$ = Imba.getTagSingleton;
-	tag$wrap = Imba.getTagForDom;
-	
-	
-	// shim for classList
+	return Imba.defineTag('svgelement','htmlelement');
 
 })()
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],7:[function(require,module,exports){
+},{"./tag":12}],7:[function(require,module,exports){
 (function(){
-	
-	// unless document:documentElement:classList
 	if (!document.documentElement.classList) {
-		
-		
+		Imba.extendTag('htmlelement', function(tag){
 			
-			ElementTag.prototype.hasFlag = function (ref){
+			tag.prototype.hasFlag = function (ref){
 				return new RegExp('(^|\\s)' + ref + '(\\s|$)').test(this._dom.className);
 			};
 			
-			ElementTag.prototype.addFlag = function (ref){
+			tag.prototype.addFlag = function (ref){
 				if (this.hasFlag(ref)) { return this };
 				this._dom.className += (this._dom.className ? (' ') : ('')) + ref;
 				return this;
 			};
 			
-			ElementTag.prototype.unflag = function (ref){
+			tag.prototype.unflag = function (ref){
 				if (!this.hasFlag(ref)) { return this };
 				var regex = new RegExp('(^|\\s)*' + ref + '(\\s|$)*','g');
 				this._dom.className = this._dom.className.replace(regex,'');
 				return this;
 			};
 			
-			ElementTag.prototype.toggleFlag = function (ref){
+			tag.prototype.toggleFlag = function (ref){
 				return this.hasFlag(ref) ? (this.unflag(ref)) : (this.flag(ref));
 			};
 			
-			ElementTag.prototype.flag = function (ref,bool){
+			tag.prototype.flag = function (ref,bool){
 				if (arguments.length == 2 && bool == false) {
 					return this.unflag(ref);
 				};
 				return this.addFlag(ref);
 			};
+		});
 		
-		true;
+		return true;
 	};
 
 })()
 },{}],8:[function(require,module,exports){
+(function (global){
+(function(){
+	function idx$(a,b){
+		return (b && b.indexOf) ? b.indexOf(a) : [].indexOf.call(a,b);
+	};
+	
+	
+	var raf; // very simple raf polyfill
+	raf || (raf = global.requestAnimationFrame);
+	raf || (raf = global.webkitRequestAnimationFrame);
+	raf || (raf = global.mozRequestAnimationFrame);
+	raf || (raf = function(blk) { return setTimeout(blk,1000 / 60); });
+	
+	// add methods to element
+	Imba.extendTag('element', function(tag){
+		
+		tag.prototype.scheduler = function (){
+			return this._scheduler == null ? (this._scheduler = new Scheduler(this)) : (this._scheduler);
+		};
+		
+		tag.prototype.schedule = function (o){
+			if(o === undefined) o = {};
+			this.scheduler().configure(o).activate();
+			return this;
+		};
+		
+		tag.prototype.unschedule = function (){
+			if (this._scheduler) { this.scheduler().deactivate() };
+			return this;
+		};
+		
+		tag.prototype.tick = function (){
+			this.render();
+			return this;
+		};
+	});
+	
+	function Scheduler(target){
+		var self = this;
+		self._target = target;
+		self._marked = false;
+		self._active = false;
+		self._marker = function() { return self.mark(); };
+		self._ticker = function(e) { return self.tick(e); };
+		
+		self._events = true;
+		self._fps = 1;
+		
+		self._dt = 0;
+		self._timestamp = 0;
+		self._ticks = 0;
+		self._flushes = 0;
+		self;
+	};
+	
+	exports.Scheduler = Scheduler; // export class 
+	Scheduler.prototype.active = function (){
+		return this._active;
+	};
+	
+	Scheduler.prototype.dt = function (){
+		return this._dt;
+	};
+	
+	Scheduler.prototype.configure = function (o){
+		if (o.events != null) { this._events = o.events };
+		if (o.fps != null) { this._fps = o.fps };
+		return this;
+	};
+	
+	Scheduler.prototype.reschedule = function (){
+		raf(this._ticker);
+		// requestAnimationFrame(@ticker)
+		return this;
+	};
+	
+	Scheduler.prototype.mark = function (){
+		this._marked = true;
+		return this;
+	};
+	
+	Scheduler.prototype.flush = function (){
+		this._marked = false;
+		this._flushes++;
+		this._target.tick();
+		return this;
+	};
+	
+	// WARN this expects raf to run at 60 fps
+	Scheduler.prototype.tick = function (d){
+		this._ticks++;
+		this._dt = d;
+		
+		var fps = this._fps;
+		
+		if (fps == 60) {
+			this._marked = true;
+		} else if (fps == 30) {
+			if (this._ticks % 2) { this._marked = true };
+		} else if (fps) {
+			// if it is less round - we trigger based
+			// on date, for consistent rendering.
+			// ie, if you want to render every second
+			// it is important that no two renders
+			// happen during the same second (according to Date)
+			var period = ((60 / fps) / 60) * 1000;
+			var beat = Math.floor(Date.now() / period);
+			
+			if (this._beat != beat) {
+				this._beat = beat;
+				this._marked = true;
+			};
+		};
+		
+		if (this._marked) this.flush();
+		if (this._active) this.reschedule();
+		return this;
+	};
+	
+	Scheduler.prototype.activate = function (){
+		if (!this._active) {
+			this._active = true;
+			
+			// override target#commit while this is active
+			this._commit = this._target.commit;
+			this._target.commit = function() { return this; };
+			if (this._events) { Imba.listen(Imba,'event',this,'onevent') };
+			this.tick(0); // start ticking
+		};
+		return this;
+	};
+	
+	Scheduler.prototype.deactivate = function (){
+		if (this._active) {
+			this._active = false;
+			this._target.commit = this._commit;
+			Imba.unlisten(Imba,'event',this);
+		};
+		return this;
+	};
+	
+	Scheduler.prototype.track = function (){
+		return this._marker;
+	};
+	
+	Scheduler.prototype.onevent = function (e){
+		var $1;
+		if (this._events instanceof Function) {
+			if (this._events(e)) this.mark();
+		} else if (this._events instanceof Array) {
+			if (idx$(($1 = e) && $1.type  &&  $1.type(),this._events) >= 0) this.mark();
+		} else if (this._events) {
+			if (e._responder) this.mark();
+		};
+		return this;
+	};
+	return Scheduler;
+
+})()
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],9:[function(require,module,exports){
 (function(){
 	function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
-	
+	var ImbaTag = Imba.TAGS.element;
 	
 	function removeNested(root,node,caret){
 		// if node/nodes isa String
 		// 	we need to use the caret to remove elements
 		// 	for now we will simply not support this
-		if (node instanceof Array) {
-			for (var i=0, ary=iter$(node), len=ary.length; i < len; i++) {
+		if (node instanceof ImbaTag) {
+			root.removeChild(node);
+		} else if (node instanceof Array) {
+			for (var i = 0, ary = iter$(node), len = ary.length; i < len; i++) {
 				removeNested(root,ary[i],caret);
 			};
-		} else if ((typeof node=='number'||node instanceof Number)) {
-			false; // noop now -- will be used in 
-		} else if (node) {
-			root.removeChild(node);
+		} else {
+			// what if this is not null?!?!?
+			// take a chance and remove a text-elementng
+			var next = caret ? (caret.nextSibling) : (root._dom.firstChild);
+			if ((next instanceof Text) && next.textContent == node) {
+				root.removeChild(next);
+			} else {
+				throw 'cannot remove string';
+			};
 		};
 		
 		return caret;
 	};
 	
+	function replaceNestedWithString(root,new$,old,caret){
+		return this;
+	};
+	
 	function appendNested(root,node){
-		if (node instanceof Array) {
-			for (var i=0, ary=iter$(node), len=ary.length; i < len; i++) {
+		if (node instanceof ImbaTag) {
+			root.appendChild(node);
+		} else if (node instanceof Array) {
+			for (var i = 0, ary = iter$(node), len = ary.length; i < len; i++) {
 				appendNested(root,ary[i]);
 			};
-		} else if ((typeof node=='number'||node instanceof Number)) {
-			false;
-		} else if ((typeof node=='string'||node instanceof String)) {
+		} else if (node != null && node !== false) {
 			root.appendChild(Imba.document().createTextNode(node));
-		} else if (node) {
-			root.appendChild(node);
 		};
 		
 		return;
+	};
+	
+	function setOnlyChild(root,node){
+		return;
+		
+		//	if nodes isa Array
+		//		if nodes:static
+		//			reconcileNested(self,nodes,@children,null,null,0)
+		//		else
+		//			reconcileCollection(self,nodes,@children,null)
+		//		# reconcile nested
+		//		# reconcileNested(self,nodes,@children,null,null,0)
+		//	elif nodes isa ImbaTag
+		//		empty
+		//		appendChild(nodes)
+		//	else
+		//		text = nodes
 	};
 	
 	// insert nodes before a certain node
@@ -2227,19 +2151,14 @@
 	// will still be correct there
 	// before must be an actual domnode
 	function insertNestedBefore(root,node,before){
-		
-		if ((typeof node=='string'||node instanceof String)) {
-			node = Imba.document().createTextNode(node);
-		};
-		
-		if (node instanceof Array) {
-			for (var i=0, ary=iter$(node), len=ary.length; i < len; i++) {
+		if (node instanceof ImbaTag) {
+			root.insertBefore(node,before);
+		} else if (node instanceof Array) {
+			for (var i = 0, ary = iter$(node), len = ary.length; i < len; i++) {
 				insertNestedBefore(root,ary[i],before);
 			};
-		} else if ((typeof node=='number'||node instanceof Number)) {
-			false; // noop now -- will be used in 
-		} else if (node) {
-			root.insertBefore(node,before);
+		} else if (node != null && node !== false) {
+			root.insertBefore(Imba.document().createTextNode(node),before);
 		};
 		
 		return before;
@@ -2291,7 +2210,7 @@
 		var maxChainLength = 0;
 		var maxChainEnd = 0;
 		
-		for (var idx=0, ary=iter$(old), len=ary.length, node; idx < len; idx++) {
+		for (var idx = 0, ary = iter$(old), len = ary.length, node; idx < len; idx++) {
 			node = ary[idx];
 			var newPos = new$.indexOf(node);
 			newPosition.push(newPos);
@@ -2348,7 +2267,7 @@
 		};
 		
 		// And let's iterate forward, but only move non-sticky nodes
-		for (var idx1=0, ary=iter$(new$), len=ary.length; idx1 < len; idx1++) {
+		for (var idx1 = 0, ary = iter$(new$), len = ary.length; idx1 < len; idx1++) {
 			if (!stickyNodes[idx1]) {
 				var after = new$[idx1 - 1];
 				insertNestedAfter(root,ary[idx1],(after && after._dom) || caret);
@@ -2383,102 +2302,151 @@
 	
 	// the general reconciler that respects conditions etc
 	// caret is the current node we want to insert things after
-	function reconcileNested(root,new$,old,caret,container,ci){
+	function reconcileNested(root,new$,old,caret){
+		
+		// if new == null or new === false or new === true
+		// 	if new === old
+		// 		return caret
+		// 	if old && new != old
+		// 		removeNested(root,old,caret) if old
+		// 
+		// 	return caret
+		
+		// var skipnew = new == null or new === false or new === true
+		var newIsNull = new$ == null || new$ === false;
+		var oldIsNull = old == null || old === false;
+		
 		
 		if (new$ === old) {
 			// remember that the caret must be an actual dom element
-			return (new$ && new$._dom) || new$ || caret;
-		};
-		
-		// this could be a dynamic / loop
-		if ((new$ instanceof Array) && (old instanceof Array)) {
-			
-			if (new$.static) {
-				// if the static is not nested - we could get a hint from compiler
-				// and just skip it
-				if (new$.static == old.static) {
-					for (var i=0, ary=iter$(new$), len=ary.length; i < len; i++) {
-						caret = reconcileNested(root,ary[i],old[i],caret,new$,i);
+			// we should instead move the actual caret? - trust
+			if (newIsNull) {
+				return caret;
+			} else if (new$ && new$._dom) {
+				return new$._dom;
+			} else {
+				return caret ? (caret.nextSibling) : (root._dom.firstChild);
+			};
+		} else if (new$ instanceof Array) {
+			if (old instanceof Array) {
+				if (new$.static || old.static) {
+					// if the static is not nested - we could get a hint from compiler
+					// and just skip it
+					if (new$.static == old.static) {
+						for (var i = 0, ary = iter$(new$), len = ary.length; i < len; i++) {
+							// this is where we could do the triple equal directly
+							caret = reconcileNested(root,ary[i],old[i],caret);
+						};
+						return caret;
+					} else {
+						removeNested(root,old,caret);
 					};
-					return caret;
+					
+					// if they are not the same we continue through to the default
+				} else {
+					return reconcileCollection(root,new$,old,caret);
 				};
-				// if they are not the same we continue through to the default
-			} else {
-				return reconcileCollection(root,new$,old,caret);
-			};
-		} else if ((typeof new$=='string'||new$ instanceof String)) {
-			var textNode;
-			
-			if (old instanceof Text) {
-				// make sure not to trigger reflow in certain browsers
-				if (old.textContent != new$) {
-					old.textContent = new$;
-				};
-				
-				textNode = old;
-			} else {
-				if (old) { removeNested(root,old,caret) };
-				textNode = Imba.document().createTextNode(new$);
-				insertNestedAfter(root,textNode,caret);
+			} else if (old instanceof ImbaTag) {
+				root.removeChild(old);
+			} else if (!oldIsNull) {
+				// old was a string-like object?
+				root.removeChild(caret ? (caret.nextSibling) : (root._dom.firstChild));
 			};
 			
-			// swap the text with textNode in container
-			return container[ci] = caret = textNode;
+			return insertNestedAfter(root,new$,caret);
+			// remove old
+		} else if (new$ instanceof ImbaTag) {
+			if (!oldIsNull) { removeNested(root,old,caret) };
+			insertNestedAfter(root,new$,caret);
+			return new$;
+		} else if (newIsNull) {
+			if (!oldIsNull) { removeNested(root,old,caret) };
+			return caret;
+		} else {
+			// if old did not exist we need to add a new directly
+			var nextNode;
+			// if old was array or imbatag we need to remove it and then add
+			if (old instanceof Array) {
+				removeNested(root,old,caret);
+			} else if (old instanceof ImbaTag) {
+				root.removeChild(old);
+			} else if (!oldIsNull) {
+				// ...
+				nextNode = caret ? (caret.nextSibling) : (root._dom.firstChild);
+				if ((nextNode instanceof Text) && nextNode.textContent != new$) {
+					nextNode.textContent = new$;
+					return nextNode;
+				};
+			};
+			
+			// now add the textnode
+			return insertNestedAfter(root,new$,caret);
 		};
-		// simply remove the previous one and add the new one
-		// will these ever be arrays?
-		if (old) { removeNested(root,old,caret) };
-		if (new$) { caret = insertNestedAfter(root,new$,caret) };
-		return caret;
 	};
 	
 	
-	
-	Imba.extendTag('htmlelement', function(tag){
+	return Imba.extendTag('htmlelement', function(tag){
 		
-		tag.prototype.setChildren = function (nodes){
-			if (nodes === this._children) {
+		tag.prototype.setChildren = function (new$,typ){
+			var old = this._children;
+			// var isArray = nodes isa Array
+			if (new$ === old) {
 				return this;
 			};
 			
-			if (nodes && nodes.static) {
-				this.setStaticChildren(nodes);
-			} else if ((nodes instanceof Array) && (this._children instanceof Array)) {
-				reconcileCollection(this,nodes,this._children,null);
-			} else if ((typeof nodes=='string'||nodes instanceof String)) {
-				this.setText(nodes);
+			if (!old) {
+				this.empty();
+				appendNested(this,new$);
+			} else if (typ == 2) {
+				return this;
+			} else if (typ == 1) {
+				// here we _know _that it is an array with the same shape
+				// every time
+				var caret = null;
+				for (var i = 0, ary = iter$(new$), len = ary.length; i < len; i++) {
+					// prev = old[i]
+					caret = reconcileNested(this,ary[i],old[i],caret);
+				};
+			} else if (typ == 3) {
+				// this is possibly fully dynamic. It often is
+				// but the old or new could be static while the other is not
+				// this is not handled now
+				// what if it was previously a static array? edgecase - but must work
+				if (new$ instanceof ImbaTag) {
+					this.empty();
+					this.appendChild(new$);
+				} else if (new$ instanceof Array) {
+					if (old instanceof Array) {
+						// is this not the same as setting staticChildren now but with the
+						reconcileCollection(this,new$,old,null);
+					} else {
+						this.empty();
+						appendNested(this,new$);
+					};
+				} else {
+					this.setText(new$);
+					return this;
+				};
+			} else if ((new$ instanceof Array) && (old instanceof Array)) {
+				reconcileCollection(this,new$,old,null);
 			} else {
-				this.empty().append(nodes);
+				this.empty();
+				appendNested(this,new$);
 			};
 			
-			this._children = nodes;
+			this._children = new$;
 			return this;
 		};
 		
+		
+		// only ever called with array as argument
 		tag.prototype.setStaticChildren = function (new$){
+			var old = this._children;
 			
-			var $1, $2;
-			var old = this._children || [];
 			var caret = null;
-			
-			// common case that should bail out from staticChildren
-			if (new$.length == 1 && (typeof new$[($1=0)]=='string'||new$[$1] instanceof String)) {
-				return (this.setText(new$[($2=0)]),new$[$2]);
-			};
-			
-			// must be array
-			if (!old.length || !old.static) {
-				old = [];
-				this.empty();
-			};
-			
-			for (var i=0, ary=iter$(new$), len=ary.length, node; i < len; i++) {
-				node = ary[i];
-				if (node === old[i]) {
-					if (node && node._dom) { caret = node._dom };
-				} else {
-					caret = reconcileNested(this,node,old[i],caret,new$,i);
-				};
+			for (var i = 0, ary = iter$(new$), len = ary.length; i < len; i++) {
+				// prev = old[i]
+				caret = reconcileNested(this,ary[i],old[i],caret);
 			};
 			
 			this._children = new$;
@@ -2491,14 +2459,15 @@
 		
 		tag.prototype.setText = function (text){
 			if (text != this._children) {
-				this.dom().textContent = this._children = text;
+				this._children = text;
+				this.dom().textContent = text == null || text === false ? ('') : (text);
 			};
 			return this;
 		};
 	});
 
 })()
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 (function(){
 	// externs;
 	
@@ -2506,10 +2475,73 @@
 		global = window;
 	};
 	
-	Imba = {};
+	Imba = {
+		VERSION: '0.13.8'
+	};
+	
+	var reg = /-./g;
+	
+	
+	Imba.subclass = function (obj,sup){
+		;
+		for (var k in sup){
+			if (sup.hasOwnProperty(k)) { obj[k] = sup[k] };
+		};
+		
+		obj.prototype = Object.create(sup.prototype);
+		obj.__super__ = obj.prototype.__super__ = sup.prototype;
+		obj.prototype.initialize = obj.prototype.constructor = obj;
+		return obj;
+	};
+	
+	Imba.iterable = function (o){
+		return o ? ((o.toArray ? (o.toArray()) : (o))) : ([]);
+	};
+	
+	Imba.await = function (o){
+		if (this.a() instanceof Array) {
+			return Promise.all(this.a());
+		} else if (this.a() && this.a().then) {
+			return this.a();
+		} else {
+			return Promise.resolve(this.a());
+		};
+	};
+	
+	Imba.toCamelCase = function (str){
+		return str.replace(reg,function(m) { return m.charAt(1).toUpperCase(); });
+	};
+	
+	Imba.indexOf = function (a,b){
+		return (b && b.indexOf) ? (b.indexOf(a)) : ([].indexOf.call(a,b));
+	};
+	
+	// trackable timeout
+	Imba.setTimeout = function (delay,block){
+		return setTimeout(function() {
+			block();
+			return Imba.emit(Imba,'timeout',[block]);
+		},delay);
+	};
+	
+	// trackable interval
+	Imba.setInterval = function (interval,block){
+		return setInterval(function() {
+			block();
+			return Imba.emit(Imba,'interval',[block]);
+		},interval);
+	};
+	
+	Imba.clearInterval = function (interval){
+		return clearInterval(interval);
+	};
+	
+	return Imba.clearTimeout = function (timeout){
+		return clearTimeout(timeout);
+	};
 
 })()
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 (function(){
 	function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 	
@@ -2519,7 +2551,7 @@
 		this._context = scope;
 		
 		if (nodes) {
-			for (var i=0, ary=iter$(nodes), len=ary.length, res=[]; i < len; i++) {
+			for (var i = 0, ary = iter$(nodes), len = ary.length, res = []; i < len; i++) {
 				res.push(tag$wrap(ary[i]));
 			};
 			this._nodes = res;
@@ -2559,7 +2591,7 @@
 	Imba.Selector.prototype.nodes = function (){
 		if (this._nodes) { return this._nodes };
 		var items = this.scope().querySelectorAll(this.query());
-		for (var i=0, ary=iter$(items), len=ary.length, res=[]; i < len; i++) {
+		for (var i = 0, ary = iter$(items), len = ary.length, res = []; i < len; i++) {
 			res.push(tag$wrap(ary[i]));
 		};
 		this._nodes = res;
@@ -2681,10 +2713,10 @@
 	};
 	
 	Imba.Selector.prototype.call = function (meth,args){
-		var self=this;
+		var self = this;
 		if(args === undefined) args = [];
 		return self.forEach(function(n) { var $1;
-		if ((self.setFn(n[($1=meth)]),n[$1])) { return self.fn().apply(n,args) }; });
+		if ((self.setFn(n[($1 = meth)]),n[$1])) { return self.fn().apply(n,args) }; });
 	};
 	
 	q$ = function(sel,scope) { return new Imba.Selector(sel,scope); };
@@ -2696,7 +2728,7 @@
 	
 	// extending tags with query-methods
 	// must be a better way to reopen classes
-	Imba.extendTag('element', function(tag){
+	return Imba.extendTag('element', function(tag){
 		tag.prototype.querySelectorAll = function (q){
 			return this._dom.querySelectorAll(q);
 		};
@@ -2707,6 +2739,325 @@
 			return new Imba.Selector(sel,this);
 		};
 	});
+	
+
+})()
+},{}],12:[function(require,module,exports){
+(function(){
+	function idx$(a,b){
+		return (b && b.indexOf) ? b.indexOf(a) : [].indexOf.call(a,b);
+	};
+	
+	Imba.static = function (items,nr){
+		items.static = nr;
+		return items;
+	};
+	
+	function ElementTag(dom){
+		this.setDom(dom);
+		this;
+	};
+	
+	exports.ElementTag = ElementTag; // export class 
+	
+	ElementTag.prototype.__object = {name: 'object'};
+	ElementTag.prototype.object = function(v){ return this._object; }
+	ElementTag.prototype.setObject = function(v){ this._object = v; return this; };
+	
+	ElementTag.prototype.dom = function (){
+		return this._dom;
+	};
+	
+	ElementTag.prototype.setDom = function (dom){
+		dom._tag = this;
+		this._dom = dom;
+		return this;
+	};
+	
+	ElementTag.prototype.setRef = function (ref){
+		this.flag(this._ref = ref);
+		return this;
+	};
+	
+	ElementTag.prototype.setHandler = function (event,handler,ctx){
+		var key = 'on' + event;
+		
+		if (handler instanceof Function) {
+			this[key] = handler;
+		} else if (handler instanceof Array) {
+			var fn = handler.shift();
+			this[key] = function(e) { return ctx[fn].apply(ctx,handler.concat(e)); };
+		} else {
+			this[key] = function(e) { return ctx[handler](e); };
+		};
+		return this;
+	};
+	
+	ElementTag.prototype.setId = function (id){
+		this.dom().id = id;
+		return this;
+	};
+	
+	ElementTag.prototype.id = function (){
+		return this.dom().id;
+	};
+	
+	ElementTag.prototype.setAttribute = function (key,new$){
+		var old = this.dom().getAttribute(key);
+		
+		if (old == new$) {
+			return new$;
+		} else if (new$ != null && new$ !== false) {
+			return this.dom().setAttribute(key,new$);
+		} else {
+			return this.dom().removeAttribute(key);
+		};
+	};
+	
+	ElementTag.prototype.removeAttribute = function (key){
+		return this.dom().removeAttribute(key);
+	};
+	
+	ElementTag.prototype.getAttribute = function (key){
+		return this.dom().getAttribute(key);
+	};
+	
+	ElementTag.prototype.setContent = function (content,typ){
+		this.setChildren(content,typ);
+		return this;
+	};
+	
+	ElementTag.prototype.setChildren = function (nodes,typ){
+		throw "Not implemented";
+	};
+	
+	ElementTag.prototype.text = function (v){
+		throw "Not implemented";
+	};
+	
+	ElementTag.prototype.setText = function (txt){
+		throw "Not implemented";
+	};
+	
+	ElementTag.prototype.dataset = function (key,val){
+		throw "Not implemented";
+	};
+	
+	// bind / present
+	// should deprecate / remove
+	ElementTag.prototype.bind = function (obj){
+		this.setObject(obj);
+		return this;
+	};
+	
+	ElementTag.prototype.render = function (){
+		return this;
+	};
+	
+	ElementTag.prototype.build = function (){
+		this.render();
+		return this;
+	};
+	
+	ElementTag.prototype.commit = function (){
+		this.render();
+		return this;
+	};
+	
+	ElementTag.prototype.end = function (){
+		if (this._built) {
+			this.commit();
+		} else {
+			this._built = true;
+			this.build();
+		};
+		return this;
+	};
+	
+	// called whenever a node has rendered itself like in <self> <div> ...
+	ElementTag.prototype.synced = function (){
+		return this;
+	};
+	
+	// called when the node is awakened in the dom - either automatically
+	// upon attachment to the dom-tree, or the first time imba needs the
+	// tag for a domnode that has been rendered on the server
+	ElementTag.prototype.awaken = function (){
+		return this;
+	};
+	
+	ElementTag.prototype.flag = function (ref,toggle){
+		throw "Not implemented";
+	};
+	
+	ElementTag.createNode = function (){
+		throw "Not implemented";
+	};
+	
+	ElementTag.prototype.initialize = ElementTag;
+	
+	HTML_TAGS = "a abbr address area article aside audio b base bdi bdo big blockquote body br button canvas caption cite code col colgroup data datalist dd del details dfn div dl dt em embed fieldset figcaption figure footer form h1 h2 h3 h4 h5 h6 head header hr html i iframe img input ins kbd keygen label legend li link main map mark menu menuitem meta meter nav noscript object ol optgroup option output p param pre progress q rp rt ruby s samp script section select small source span strong style sub summary sup table tbody td textarea tfoot th thead time title tr track u ul var video wbr".split(" ");
+	HTML_TAGS_UNSAFE = "article aside header section".split(" ");
+	SVG_TAGS = "circle defs ellipse g line linearGradient mask path pattern polygon polyline radialGradient rect stop svg text tspan".split(" ");
+	
+	Imba.TAGS = {
+		element: ElementTag
+	};
+	
+	Imba.SINGLETONS = {};
+	IMBA_TAGS = Imba.TAGS;
+	
+	function extender(obj,sup){
+		for (var i = 0, keys = Object.keys(sup), l = keys.length; i < l; i++){
+			obj[($1 = keys[i])] == null ? (obj[$1] = sup[keys[i]]) : (obj[$1]);
+		};
+		
+		obj.prototype = Object.create(sup.prototype);
+		obj.__super__ = obj.prototype.__super__ = sup.prototype;
+		obj.prototype.initialize = obj.prototype.constructor = obj;
+		if (sup.inherit) { sup.inherit(obj) };
+		return obj;
+	};
+	
+	Imba.defineTag = function (name,supr,body){
+		if(body==undefined && typeof supr == 'function') body = supr,supr = '';
+		if(supr==undefined) supr = '';
+		supr || (supr = (idx$(name,HTML_TAGS) >= 0) ? ('htmlelement') : ('div'));
+		
+		var superklass = Imba.TAGS[supr];
+		
+		var fname = name == 'var' ? ('vartag') : (name);
+		// should drop this in production / optimized mode, but for debug
+		// we create a constructor with a recognizeable name
+		var klass = new Function(("return function " + fname.replace(/[\s\-\:]/g,'_') + "(dom)\{ this.setDom(dom); \}"))();
+		klass._name = name;
+		
+		extender(klass,superklass);
+		
+		Imba.TAGS[name] = klass;
+		
+		if (body) { body.call(klass,klass,klass.prototype) };
+		return klass;
+	};
+	
+	Imba.defineSingletonTag = function (id,supr,body){
+		if(body==undefined && typeof supr == 'function') body = supr,supr = '';
+		if(supr==undefined) supr = '';
+		var superklass = Imba.TAGS[supr || 'div'];
+		
+		// should drop this in production / optimized mode, but for debug
+		// we create a constructor with a recognizeable name
+		var klass = new Function(("return function " + id.replace(/[\s\-\:]/g,'_') + "(dom)\{ this.setDom(dom); \}"))();
+		klass._name = null;
+		
+		extender(klass,superklass);
+		
+		Imba.SINGLETONS[id] = klass;
+		
+		if (body) { body.call(klass,klass,klass.prototype) };
+		return klass;
+	};
+	
+	Imba.extendTag = function (name,body){
+		var klass = ((typeof name=='string'||name instanceof String) ? (Imba.TAGS[name]) : (name));
+		if (body) { body && body.call(klass,klass,klass.prototype) };
+		return klass;
+	};
+	
+	Imba.tag = function (name){
+		var typ = Imba.TAGS[name];
+		if (!typ) { throw new Error(("tag " + name + " is not defined")) };
+		return new typ(typ.createNode());
+	};
+	
+	Imba.tagWithId = function (name,id){
+		var typ = Imba.TAGS[name];
+		if (!typ) { throw new Error(("tag " + name + " is not defined")) };
+		var dom = typ.createNode();
+		dom.id = id;
+		return new typ(dom);
+	};
+	
+	// TODO: Can we move these out and into dom.imba in a clean way?
+	// These methods depends on Imba.document.getElementById
+	
+	Imba.getTagSingleton = function (id){
+		var klass;
+		var dom,node;
+		
+		if (klass = Imba.SINGLETONS[id]) {
+			if (klass && klass.Instance) { return klass.Instance };
+			
+			// no instance - check for element
+			if (dom = Imba.document().getElementById(id)) {
+				// we have a live instance - when finding it through a selector we should awake it, no?
+				// console.log('creating the singleton from existing node in dom?',id,type)
+				node = klass.Instance = new klass(dom);
+				node.awaken(dom); // should only awaken
+				return node;
+			};
+			
+			dom = klass.createNode();
+			dom.id = id;
+			node = klass.Instance = new klass(dom);
+			node.end().awaken(dom);
+			return node;
+		} else if (dom = Imba.document().getElementById(id)) {
+			return Imba.getTagForDom(dom);
+		};
+	};
+	
+	var svgSupport = typeof SVGElement !== 'undefined';
+	
+	Imba.getTagForDom = function (dom){
+		var m;
+		if (!dom) { return null };
+		if (dom._dom) { return dom }; // could use inheritance instead
+		if (dom._tag) { return dom._tag };
+		if (!dom.nodeName) { return null };
+		
+		var ns = null;
+		var id = dom.id;
+		var type = dom.nodeName.toLowerCase();
+		var cls = dom.className;
+		
+		if (id && Imba.SINGLETONS[id]) {
+			// FIXME control that it is the same singleton?
+			// might collide -- not good?
+			return Imba.getTagSingleton(id);
+		};
+		// look for id - singleton
+		
+		// need better test here
+		if (svgSupport && (dom instanceof SVGElement)) {
+			ns = "svg";
+			cls = dom.className.baseVal;
+		};
+		
+		if (cls) {
+			// there can be several matches here - should choose the last
+			// should fall back to less specific later? - otherwise things may fail
+			// TODO rework this
+			if (m = cls.match(/\b_([a-z\-]+)\b(?!\s*_[a-z\-]+)/)) {
+				type = m[1].replace(/-/g,'_');
+			};
+			
+			if (m = cls.match(/\b([a-z]+)_\b/)) {
+				ns = m[1];
+			};
+		};
+		
+		var spawner = Imba.TAGS[type];
+		return spawner ? (new spawner(dom).awaken(dom)) : (null);
+	};
+	
+	t$ = Imba.tag;
+	tc$ = Imba.tagWithFlags;
+	ti$ = Imba.tagWithId;
+	tic$ = Imba.tagWithIdAndFlags;
+	id$ = Imba.getTagSingleton;
+	return tag$wrap = Imba.getTagForDom;
+	
 
 })()
 },{}]},{},[1])(1)

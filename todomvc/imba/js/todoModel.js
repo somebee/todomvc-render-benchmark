@@ -22,7 +22,7 @@
 	
 	TodoModel.prototype.inform = function (){
 		if (API.AUTORENDER) {
-			for (var i=0, ary=iter$(this._listeners), len=ary.length; i < len; i++) {
+			for (var i = 0, ary = iter$(this._listeners), len = ary.length; i < len; i++) {
 				ary[i](this);
 			};
 		};
@@ -40,7 +40,7 @@
 	};
 	
 	TodoModel.prototype.toggleAll = function (state){
-		for (var i=0, ary=iter$(this.items()), len=ary.length; i < len; i++) {
+		for (var i = 0, ary = iter$(this.items()), len = ary.length; i < len; i++) {
 			ary[i].completed = state;
 		};
 		return this.inform();
@@ -78,7 +78,7 @@
 	
 	TodoModel.prototype.load = function (){
 		this.setItems(JSON.parse(localStorage.getItem(this._key) || '[]'));
-		for (var i=0, ary=iter$(this.items()), len=ary.length; i < len; i++) {
+		for (var i = 0, ary = iter$(this.items()), len = ary.length; i < len; i++) {
 			ary[i].id = id++;
 		}; // setting unique id
 		return this.inform();
@@ -90,5 +90,10 @@
 		if (json != this._json) { localStorage.setItem(this._key,this._json = json) };
 		return this;
 	};
+	return TodoModel;
+	
+	
+	
+	
 
 })()

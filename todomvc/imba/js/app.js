@@ -16,7 +16,7 @@
 		};
 		
 		tag.prototype.build = function (){
-			var self=this;
+			var self = this;
 			self._model = Todos;
 			self._model.load();
 			self._model.subscribe(function() { return self.render(); });
@@ -34,7 +34,7 @@
 			
 			if (value = e.target().value().trim()) {
 				this.model().addTodo(value);
-				return (e.target().setValue(v_=""),v_);
+				return (e.target().setValue(v_ = ""),v_);
 			};
 		};
 		
@@ -50,14 +50,14 @@
 		};
 		
 		tag.prototype.list = function (items){
-			for (var i=0, ary=iter$(items), len=ary.length, res=[]; i < len; i++) {
+			for (var i = 0, ary = iter$(items), len = ary.length, res = []; i < len; i++) {
 				res.push((this['_' + i] = this['_' + i] || t$('todo')).setObject(ary[i]).end());
 			};
 			return res;
 		};
 		
 		tag.prototype.render = function (){
-			var t0, t1, t2;
+			var t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10;
 			API.RENDERCOUNT++;
 			
 			var all = Todos._items;
@@ -66,7 +66,7 @@
 			var done = [];
 			var active = [];
 			
-			for (var i=0, ary=iter$(all), len_=ary.length, todo; i < len_; i++) {
+			for (var i = 0, ary = iter$(all), len_ = ary.length, todo; i < len_; i++) {
 				todo = ary[i];
 				todo.completed ? (done.push(todo)) : (active.push(todo));
 			};
@@ -77,36 +77,36 @@
 				items = active;
 			};
 			
-			return this.setChildren(Imba.static([
-				(t0 = this.$a || (this.$a = t$('header').flag('header'))).setContent(Imba.static([
-					(t0.$$a = t0.$$a || t$('h1')).setText(("todos " + (API.RENDERCOUNT))).end(),
+			return this.setChildren([
+				(t0 = this.$a=this.$a || t$('header').flag('header')).setContent([
+					(t1 = t0.$$a=t0.$$a || t$('h1')).setContent(("todos " + (API.RENDERCOUNT)),3).end(),
 					(t0.$$b = t0.$$b || t$('input').flag('new-todo').setType('text').setPlaceholder('What needs to be done?').setAutofocus(true)).end()
-				],1)).end(),
+				],2).end(),
 				
 				(all.length > 0) && (
-					(t0 = this.$b || (this.$b = t$('section').flag('main'))).setContent(Imba.static([
-						(t0.$$a = t0.$$a || t$('input').flag('toggle-all').setType('checkbox').setHandler('change','toggleAll',this)).end(),
-						(t0.$$b = t0.$$b || t$('ul').flag('todo-list')).setContent(this.list(items)).end()
-					],1)).end()
+					(t2 = this.$b=this.$b || t$('section').flag('main')).setContent([
+						(t2.$$a = t2.$$a || t$('input').flag('toggle-all').setType('checkbox').setHandler('change','toggleAll',this)).end(),
+						(t3 = t2.$$b=t2.$$b || t$('ul').flag('todo-list')).setContent(this.list(items),3).end()
+					],2).end()
 				),
 				
 				(all.length > 0) && (
-					(t0 = this.$c || (this.$c = t$('footer').flag('footer'))).setContent(Imba.static([
-						(t1 = t0.$$a || (t0.$$a = t$('span').flag('todo-count'))).setContent(Imba.static([
-							(t1.$$a = t1.$$a || t$('strong')).setText(("" + (active.length) + " ")).end(),
+					(t4 = this.$c=this.$c || t$('footer').flag('footer')).setContent([
+						(t5 = t4.$$a=t4.$$a || t$('span').flag('todo-count')).setContent([
+							(t6 = t5.$$a=t5.$$a || t$('strong')).setContent(("" + (active.length) + " "),3).end(),
 							active.length == 1 ? ('item left') : ('items left')
-						],1)).end(),
-						(t1 = t0.$$b || (t0.$$b = t$('ul').flag('filters'))).setContent(Imba.static([
-							(t2 = t1.$$a || (t1.$$a = t$('li'))).setContent((t2.$$a = t2.$$a || t$('a').setHref('#/')).flag('selected',(items == all)).setText('All').end()).end(),
-							(t2 = t1.$$b || (t1.$$b = t$('li'))).setContent((t2.$$a = t2.$$a || t$('a').setHref('#/active')).flag('selected',(items == active)).setText('Active').end()).end(),
-							(t2 = t1.$$c || (t1.$$c = t$('li'))).setContent((t2.$$a = t2.$$a || t$('a').setHref('#/completed')).flag('selected',(items == done)).setText('Completed').end()).end()
-						],1)).end(),
+						],1).end(),
+						(t7 = t4.$$b=t4.$$b || t$('ul').flag('filters')).setContent([
+							(t8 = t7.$$a=t7.$$a || t$('li')).setContent((t8.$$a = t8.$$a || t$('a').setHref('#/')).flag('selected',(items == all)).setText('All').end(),2).end(),
+							(t9 = t7.$$b=t7.$$b || t$('li')).setContent((t9.$$a = t9.$$a || t$('a').setHref('#/active')).flag('selected',(items == active)).setText('Active').end(),2).end(),
+							(t10 = t7.$$c=t7.$$c || t$('li')).setContent((t10.$$a = t10.$$a || t$('a').setHref('#/completed')).flag('selected',(items == done)).setText('Completed').end(),2).end()
+						],2).end(),
 						(done.length > 0) && (
-							(t0.$$c = t0.$$c || t$('button').flag('clear-completed').setHandler('tap','clearCompleted',this)).setText('Clear completed').end()
+							(t4.$$c = t4.$$c || t$('button').flag('clear-completed').setHandler('tap','clearCompleted',this)).setText('Clear completed').end()
 						)
-					],1)).end()
+					],1).end()
 				)
-			],1)).synced();
+			],1).synced();
 		};
 	});
 	
@@ -155,6 +155,9 @@
 	};
 	
 	// append it to the dom
-	q$$('.todoapp').append(app);
+	return q$$('.todoapp').append(app);
+	
+	
+	
 
 })()
