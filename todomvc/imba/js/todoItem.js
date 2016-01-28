@@ -6,7 +6,7 @@
 	// to do something similar to React 'shouldComponentUpdate'. You can implement
 	// this however you want - you merely try to figure out whether anything have
 	// changed inside tag#commit, and then rerender if it has.
-	return Imba.defineTag('todo','li', function(tag){
+	return tag$.defineTag('todo', 'li', function(tag){
 		
 		tag.prototype.model = function (){
 			return this.up(q$('._app',this)).model();
@@ -42,12 +42,12 @@
 			var todo = this._object;
 			
 			return this.flag('completed',(todo.completed)).setChildren([
-				(t0 = this.$a=this.$a || t$('div').flag('view')).setContent([
-					(t1 = t0.$$a=t0.$$a || t$('label').setHandler('dblclick','edit',this)).setContent(("" + (todo.title)),3).end(),
-					(this._toggle = this._toggle || t$('input').setRef('toggle',this).setType('checkbox').setHandler('change','toggle',this)).setChecked((todo.completed)).end(),
-					(t0.$$c = t0.$$c || t$('button').flag('destroy').setHandler('tap','drop',this)).end()
+				(t0 = this.$a=this.$a || tag$.$div().flag('view')).setContent([
+					(t1 = t0.$$a=t0.$$a || tag$.$label().setHandler('dblclick','edit',this)).setContent(("" + (todo.title)),3).end(),
+					(this._toggle = this._toggle || tag$.$input().setRef('toggle',this).setType('checkbox').setHandler('change','toggle',this)).setChecked((todo.completed)).end(),
+					(t0.$$c = t0.$$c || tag$.$button().flag('destroy').setHandler('tap','drop',this)).end()
 				],2).end(),
-				(this._input = this._input || t$('input').setRef('input',this).flag('edit').setType('text')).end()
+				(this._input = this._input || tag$.$input().setRef('input',this).flag('edit').setType('text')).end()
 			],2).synced();
 		};
 		

@@ -11,8 +11,6 @@
 	global.TodoModel = TodoModel; // global class 
 	var id = 0;
 	
-	
-	TodoModel.prototype.__items = {name: 'items'};
 	TodoModel.prototype.items = function(v){ return this._items; }
 	TodoModel.prototype.setItems = function(v){ this._items = v; return this; };
 	

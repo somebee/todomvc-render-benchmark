@@ -5,7 +5,7 @@
 	
 	Todos = new TodoModel('imba-todos');
 	
-	Imba.defineTag('app', function(tag){
+	tag$.defineTag('app', function(tag){
 		
 		tag.prototype.hash = function (){
 			return this._hash;
@@ -51,7 +51,7 @@
 		
 		tag.prototype.list = function (items){
 			for (var i = 0, ary = iter$(items), len = ary.length, res = []; i < len; i++) {
-				res.push((this['_' + i] = this['_' + i] || t$('todo')).setObject(ary[i]).end());
+				res.push((this['_' + i] = this['_' + i] || tag$.$todo()).setObject(ary[i]).end());
 			};
 			return res;
 		};
@@ -78,34 +78,34 @@
 			};
 			
 			return this.setChildren([
-				(t0 = this.$a=this.$a || t$('header').flag('header')).setContent([
-					(t1 = t0.$$a=t0.$$a || t$('h1')).setContent(("todos " + (API.RENDERCOUNT)),3).end(),
-					(t0.$$b = t0.$$b || t$('input').flag('new-todo').setType('text').setPlaceholder('What needs to be done?').setAutofocus(true)).end()
+				(t0 = this.$a=this.$a || tag$.$header().flag('header')).setContent([
+					(t1 = t0.$$a=t0.$$a || tag$.$h1()).setContent(("todos " + (API.RENDERCOUNT)),3).end(),
+					(t0.$$b = t0.$$b || tag$.$input().flag('new-todo').setType('text').setPlaceholder('What needs to be done?').setAutofocus(true)).end()
 				],2).end(),
 				
-				(all.length > 0) && (
-					(t2 = this.$b=this.$b || t$('section').flag('main')).setContent([
-						(t2.$$a = t2.$$a || t$('input').flag('toggle-all').setType('checkbox').setHandler('change','toggleAll',this)).end(),
-						(t3 = t2.$$b=t2.$$b || t$('ul').flag('todo-list')).setContent(this.list(items),3).end()
+				(all.length > 0) ? (
+					(t2 = this.$b=this.$b || tag$.$section().flag('main')).setContent([
+						(t2.$$a = t2.$$a || tag$.$input().flag('toggle-all').setType('checkbox').setHandler('change','toggleAll',this)).end(),
+						(t3 = t2.$$b=t2.$$b || tag$.$ul().flag('todo-list')).setContent(this.list(items),3).end()
 					],2).end()
-				),
+				) : void(0),
 				
-				(all.length > 0) && (
-					(t4 = this.$c=this.$c || t$('footer').flag('footer')).setContent([
-						(t5 = t4.$$a=t4.$$a || t$('span').flag('todo-count')).setContent([
-							(t6 = t5.$$a=t5.$$a || t$('strong')).setContent(("" + (active.length) + " "),3).end(),
+				(all.length > 0) ? (
+					(t4 = this.$c=this.$c || tag$.$footer().flag('footer')).setContent([
+						(t5 = t4.$$a=t4.$$a || tag$.$span().flag('todo-count')).setContent([
+							(t6 = t5.$$a=t5.$$a || tag$.$strong()).setContent(("" + (active.length) + " "),3).end(),
 							active.length == 1 ? ('item left') : ('items left')
 						],1).end(),
-						(t7 = t4.$$b=t4.$$b || t$('ul').flag('filters')).setContent([
-							(t8 = t7.$$a=t7.$$a || t$('li')).setContent((t8.$$a = t8.$$a || t$('a').setHref('#/')).flag('selected',(items == all)).setText('All').end(),2).end(),
-							(t9 = t7.$$b=t7.$$b || t$('li')).setContent((t9.$$a = t9.$$a || t$('a').setHref('#/active')).flag('selected',(items == active)).setText('Active').end(),2).end(),
-							(t10 = t7.$$c=t7.$$c || t$('li')).setContent((t10.$$a = t10.$$a || t$('a').setHref('#/completed')).flag('selected',(items == done)).setText('Completed').end(),2).end()
+						(t7 = t4.$$b=t4.$$b || tag$.$ul().flag('filters')).setContent([
+							(t8 = t7.$$a=t7.$$a || tag$.$li()).setContent((t8.$$a = t8.$$a || tag$.$a().setHref('#/')).flag('selected',(items == all)).setText('All').end(),2).end(),
+							(t9 = t7.$$b=t7.$$b || tag$.$li()).setContent((t9.$$a = t9.$$a || tag$.$a().setHref('#/active')).flag('selected',(items == active)).setText('Active').end(),2).end(),
+							(t10 = t7.$$c=t7.$$c || tag$.$li()).setContent((t10.$$a = t10.$$a || tag$.$a().setHref('#/completed')).flag('selected',(items == done)).setText('Completed').end(),2).end()
 						],2).end(),
-						(done.length > 0) && (
-							(t4.$$c = t4.$$c || t$('button').flag('clear-completed').setHandler('tap','clearCompleted',this)).setText('Clear completed').end()
-						)
+						(done.length > 0) ? (
+							(t4.$$c = t4.$$c || tag$.$button().flag('clear-completed').setHandler('tap','clearCompleted',this)).setText('Clear completed').end()
+						) : void(0)
 					],1).end()
-				)
+				) : void(0)
 			],1).synced();
 		};
 	});
@@ -113,7 +113,7 @@
 	
 	
 	// create an instance of the app (with id app)
-	var app = ti$('app','app').end();
+	var app = tag$.$app().setId('app').end();
 	
 	API.addTodo = function (title){
 		return Todos.addTodo(title);

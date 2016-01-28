@@ -93,7 +93,7 @@
 	};
 	
 	Framework.prototype.url = function (){
-		return this._options.url || ("todomvc/" + this._name + "/index.html");
+		return this._options.url || ("todomvc/" + (this._name) + "/index.html");
 	};
 	
 	Framework.prototype.node = function (){
@@ -117,13 +117,13 @@
 	};
 	
 	Framework.prototype.build = function (){
-		var self=this;
+		var self = this;
 		return self._build || (self._build = new Promise(function(resolve) {
 			self.iframe().style.minHeight = '400px';
 			self.iframe().src = self.url();
-			self.iframe().id = ("" + self._name + "_frame");
+			self.iframe().id = ("" + (self._name) + "_frame");
 			window.apps.appendChild(self.node());
-			self.node().appendChild(self._header = div('header',self._name));
+			self.node().appendChild(self._header = div('header',self._options.title || self._name));
 			self.node().appendChild(self.iframe());
 			
 			var wait = function() {
@@ -146,7 +146,7 @@
 	Framework.prototype.reset = function (count){
 		this.api().AUTORENDER = false;
 		// api.clearAllTodos
-		for (var len=count, i = 1; i <= len; i++) {
+		for (var len = count, i = 1; i <= len; i++) {
 			this.api().addTodo(("Todo " + i));
 		};
 		this._todoCount = count;
@@ -170,7 +170,7 @@
 	
 	
 	function Bench(o){
-		var self=this;
+		var self = this;
 		if(o === undefined) o = {};
 		this._name = o.title;
 		this._suite = new Benchmark.Suite(this._name);
@@ -213,7 +213,7 @@
 	
 	Bench.prototype.bind = function (){
 		
-		var self=this;
+		var self = this;
 		self._suite.on('start',function(e) {
 			console.log("start");
 			document.body.classList.add('running');
@@ -248,7 +248,7 @@
 	};
 	
 	Bench.prototype.run = function (){
-		var self=this;
+		var self = this;
 		return Framework.build().then(function() {
 			// @benchmarks.map do |b| b:hz = Math.random * 40000
 			// present
@@ -266,7 +266,7 @@
 	};
 	
 	Bench.prototype.warmup = function (times){
-		var self=this;
+		var self = this;
 		if(times === undefined) times = 1000;
 		this.reset();
 		setTimeout(function() {
@@ -283,7 +283,7 @@
 						fn.call(bm);
 					};
 					var elapsed = new Date() - start;
-					app.setStatus(("" + (app.name()) + " - " + self._name + " - " + times + " iterations - " + elapsed + "ms"));
+					app.setStatus(("" + (app.name()) + " - " + (self._name) + " - " + times + " iterations - " + elapsed + "ms"));
 					return setTimeout(function() { return step(); },50);
 				};
 			};
@@ -332,7 +332,7 @@
 			},
 			
 			tooltip: {
-				pointFormatter: function(v) { return "<b>" + this.y.toFixed(2) + ("</b> ops/sec (<b>" + ((this.y / base).toFixed(2)) + "x</b>)<br>"); }
+				pointFormatter: function(v) { return "<b>" + this.y.toFixed(2) + ("</b> ops/sec (<b>" + (this.y / base).toFixed(2) + "x</b>)<br>"); }
 			// shared: true
 			},
 			
@@ -341,16 +341,16 @@
 				y: 20
 			},
 			
-			plotOptions: {bar: {dataLabels: {enabled: true,formatter: function(v) { return "<b>" + ((this.y / base).toFixed(2)) + "x</b>"; }}}},
+			plotOptions: {bar: {dataLabels: {enabled: true,formatter: function(v) { return ("<b>" + (this.y / base).toFixed(2) + "x</b>"); }}}},
 			credits: {enabled: false},
 			series: series.reverse()
 		});
 	};
 	
 	
-	new Framework('react');
-	new Framework('imba');
-	new Framework('mithril');
+	new Framework('react',{title: 'react v0.13.3'});
+	new Framework('imba',{title: 'imba v0.14.3'});
+	new Framework('mithril',{title: 'mithril v0.2.0'});
 	
 	// It is difficult to test this against the others
 	// as it really does things in a very different way
@@ -444,7 +444,7 @@
 	
 	window.apps.setAttribute("data-count",Framework.count());
 	
-	Framework.build().then(function(res) {
+	return Framework.build().then(function(res) {
 		console.log("built",res);
 		return Promise.delay(200).then(function() {
 			return document.getElementsByTagName('button')[0].focus();

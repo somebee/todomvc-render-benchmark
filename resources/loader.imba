@@ -98,7 +98,7 @@ class Framework
 			iframe:src = url
 			iframe:id = "{@name}_frame"
 			window:apps.appendChild(node)
-			node.appendChild(@header = div('header',@name))
+			node.appendChild(@header = div('header',@options:title or @name))
 			node.appendChild(iframe)
 
 			var wait = do
@@ -277,9 +277,9 @@ class Bench
 		})
 
 
-Framework.new('react')
-Framework.new('imba')
-Framework.new('mithril')
+Framework.new('react', title: 'react v0.13.3')
+Framework.new('imba', title: 'imba v0.14.3')
+Framework.new('mithril', title: 'mithril v0.2.0')
 
 # It is difficult to test this against the others
 # as it really does things in a very different way
