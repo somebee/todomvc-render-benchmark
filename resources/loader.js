@@ -57,6 +57,7 @@
 		dict[name] = this;
 		all.push(this);
 		this._name = name;
+		this._title = o.title || name;
 		this._options = o;
 		this._ready = false;
 	};
@@ -86,6 +87,10 @@
 	
 	Framework.prototype.name = function (){
 		return this._name;
+	};
+	
+	Framework.prototype.title = function (){
+		return this._title;
 	};
 	
 	Framework.prototype.color = function (){
@@ -123,7 +128,7 @@
 			self.iframe().src = self.url();
 			self.iframe().id = ("" + (self._name) + "_frame");
 			window.apps.appendChild(self.node());
-			self.node().appendChild(self._header = div('header',self._options.title || self._name));
+			self.node().appendChild(self._header = div('header',self.title()));
 			self.node().appendChild(self.iframe());
 			
 			var wait = function() {
@@ -165,6 +170,7 @@
 	
 	Framework.prototype.setStatus = function (status){
 		this._header.textContent = status;
+		this;
 		return this;
 	};
 	
@@ -283,7 +289,7 @@
 						fn.call(bm);
 					};
 					var elapsed = new Date() - start;
-					app.setStatus(("" + (app.name()) + " - " + (self._name) + " - " + times + " iterations - " + elapsed + "ms"));
+					app.setStatus(("" + (app.title()) + " - " + (self._name) + " - " + times + " iterations - " + elapsed + "ms"));
 					return setTimeout(function() { return step(); },50);
 				};
 			};
@@ -304,7 +310,7 @@
 		// find slowest
 		var sorted = this._benchmarks.slice().sort(function(a,b) { return a.hz - b.hz; });
 		var base = sorted[0].hz;
-		var series = this._benchmarks.map(function(b) { return {type: 'bar',borderWidth: 0,name: b.App.name(),data: [b.hz]}; });
+		var series = this._benchmarks.map(function(b) { return {type: 'bar',borderWidth: 0,name: b.App.title(),data: [b.hz]}; });
 		
 		return this._chart = new Highcharts.Chart({
 			chart: {type: 'bar',renderTo: el},
@@ -350,11 +356,8 @@
 	
 	new Framework('react',{title: 'react v0.13.3'});
 	new Framework('imba',{title: 'imba v0.14.3'});
+	new Framework('imba-dev',{title: 'imba v0.15.0-alpha.1'});
 	new Framework('mithril',{title: 'mithril v0.2.0'});
-	
-	// It is difficult to test this against the others
-	// as it really does things in a very different way
-	// Framework.new('angularjs')
 	
 	EVERYTHING = new Bench(
 		{label: 'Bench Everything',
@@ -451,4 +454,4 @@
 		});
 	});
 
-})()
+})();

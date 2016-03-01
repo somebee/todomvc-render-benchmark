@@ -64,10 +64,14 @@ class Framework
 	def name
 		@name
 
+	def title
+		@title
+
 	def initialize name, o = {}
 		dict[name] = self
 		all.push(self)
 		@name = name
+		@title = o:title or name
 		@options = o
 		@ready = false
 
@@ -98,7 +102,7 @@ class Framework
 			iframe:src = url
 			iframe:id = "{@name}_frame"
 			window:apps.appendChild(node)
-			node.appendChild(@header = div('header',@options:title or @name))
+			node.appendChild(@header = div('header',title))
 			node.appendChild(iframe)
 
 			var wait = do
@@ -224,7 +228,7 @@ class Bench
 					while i++ < times
 						fn.call(bm)
 					var elapsed = Date.new - start
-					app.status = "{app.name} - {@name} - {times} iterations - {elapsed}ms"
+					app.status = "{app.title} - {@name} - {times} iterations - {elapsed}ms"
 					setTimeout(&,50) do step()
 
 			step()
@@ -241,7 +245,7 @@ class Bench
 		# find slowest
 		var sorted = @benchmarks.slice.sort do |a,b| a:hz - b:hz
 		var base = sorted[0][:hz]
-		var series =  @benchmarks.map do |b| {type: 'bar', borderWidth: 0, name: b.App.name, data: [b:hz] }
+		var series =  @benchmarks.map do |b| {type: 'bar', borderWidth: 0, name: b.App.title, data: [b:hz] }
 
 		@chart = Highcharts.Chart.new({
 			chart: { type: 'bar', renderTo: el }
@@ -279,11 +283,8 @@ class Bench
 
 Framework.new('react', title: 'react v0.13.3')
 Framework.new('imba', title: 'imba v0.14.3')
+Framework.new('imba-dev', title: 'imba v0.15.0-alpha.1')
 Framework.new('mithril', title: 'mithril v0.2.0')
-
-# It is difficult to test this against the others
-# as it really does things in a very different way
-# Framework.new('angularjs')
 
 EVERYTHING = Bench.new
 	label: 'Bench Everything'
