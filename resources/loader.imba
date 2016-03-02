@@ -282,7 +282,7 @@ class Bench
 
 
 Framework.new('react', title: 'react v0.13.3')
-Framework.new('imba', title: 'imba v0.14.3')
+Framework.new('imba-0.14.3', title: 'imba v0.14.3')
 Framework.new('imba-dev', title: 'imba v0.15.0-alpha.1')
 Framework.new('mithril', title: 'mithril v0.2.0')
 

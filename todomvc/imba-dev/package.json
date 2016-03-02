@@ -1,7 +1,10 @@
 {
   "private": true,
   "dependencies": {
-    "imba": "^0.15.0-alpha.1",
-    "webpack": "^1.12.14"
+    "imba": "^0.15.0-alpha.1"
+  },
+  "scripts": {
+  	"build": "./node_modules/imba/bin/imbapack src/app.imba ./app.js",
+  	"watch": "./node_modules/imba/bin/imbapack src/app.imba ./app.js --watch"
   }
 }

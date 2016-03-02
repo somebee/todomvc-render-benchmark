@@ -355,7 +355,7 @@
 	
 	
 	new Framework('react',{title: 'react v0.13.3'});
-	new Framework('imba',{title: 'imba v0.14.3'});
+	new Framework('imba-0.14.3',{title: 'imba v0.14.3'});
 	new Framework('imba-dev',{title: 'imba v0.15.0-alpha.1'});
 	new Framework('mithril',{title: 'mithril v0.2.0'});
 	
