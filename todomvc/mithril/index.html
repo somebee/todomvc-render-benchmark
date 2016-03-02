@@ -3,22 +3,12 @@
 	<head>
 		<meta charset="utf-8">
 		<title>Mithril • TodoMVC</title>
-		<link rel="stylesheet" href="ext/todomvc-common/base.css">
-		<link rel="stylesheet" href="ext/todomvc-app-css/index.css">
-		<link rel="stylesheet" href="../../resources/app.css">
-		<script src="../../resources/api.js"></script>
+		<link rel="stylesheet" href="../../resources/shared/app.css">
+		<script src="../../resources/shared/api.js"></script>
 	</head>
 	<body>
 		<script src="js/api.js"></script>
-		<section id="todoapp"></section>
-		<footer id="info">
-			<p>Double-click to edit a todo</p>
-			<p>Created by <a href="http://taylorhakes.com">Taylor Hakes</a> and <a href="http://blogue.jpmonette.net">Jean-Philippe Monette</a> <br>(Special thanks to <a
-					href="https://github.com/lhorie/">Leo Horie</a>)</p>
-			<p>Part of <a href="http://todomvc.com">TodoMVC</a></p>
-		</footer>
-		<!-- <script src="node_modules/todomvc-common/base.js"></script> -->
-		
+		<section id="todoapp" class="todoapp"></section>
 		<script src="ext/mithril/mithril.min.js"></script>
 		<script src="js/models/todo.js"></script>
 		<script src="js/models/storage.js"></script>

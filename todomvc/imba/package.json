@@ -1,0 +1,6 @@
+{
+  "private": true,
+  "dependencies": {
+    "imba": "^0.15.0-alpha.1"
+  }
+}
