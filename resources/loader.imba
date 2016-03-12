@@ -58,7 +58,7 @@ class Framework
 
 	def self.build
 		@build ||= Promise.reduce(all) do |curr,next|
-			curr.build.then do 
+			curr.build.then do
 				Promise.delay(100).then do next.build
 
 	def name
@@ -77,7 +77,7 @@ class Framework
 
 	def color
 		@options:color or 'red'
-		
+
 	def url
 		@options:url || "todomvc/{@name}/index.html"
 
@@ -130,7 +130,7 @@ class Framework
 		node:classList.remove('running')
 
 	def activate
-		node:classList.add('running')		
+		node:classList.add('running')
 
 	def status= status
 		@header:textContent = status
@@ -170,7 +170,7 @@ class Bench
 		if @current = @benchmarks[idx]
 			@current.App.activate
 		self
-	
+
 
 	def bind
 
@@ -194,7 +194,7 @@ class Bench
 			Framework.get(event:target:name).status = String(event:target)
 			step(@step + 1)
 			return
-	
+
 		@suite.on 'complete' do
 			console.log('Fastest is ' + this.filter('fastest').pluck('name'))
 			document:body:classList.remove('running')
@@ -213,7 +213,7 @@ class Bench
 			ex.api.RENDERCOUNT = -1
 			ex.api.render(yes)
 		self
-		
+
 	def warmup times = 1000
 		reset
 		setTimeout(&,50) do
@@ -234,7 +234,7 @@ class Bench
 			step()
 
 		return self
-		
+
 
 	def present
 		# create div
@@ -285,6 +285,7 @@ Framework.new('react', title: 'react v0.13.3')
 Framework.new('imba-0.14.3', title: 'imba v0.14.3')
 Framework.new('imba-dev', title: 'imba v0.15.0-alpha.1')
 Framework.new('mithril', title: 'mithril v0.2.0')
+Framework.new('riot', title: 'riot v2.2.4')
 
 EVERYTHING = Bench.new
 	label: 'Bench Everything'
@@ -363,7 +364,7 @@ Manager.suites.map do |suite|
 
 window:apps.setAttribute("data-count",Framework.count)
 
-Framework.build.then do |res| 
+Framework.build.then do |res|
 	console.log "built",res
 	Promise.delay(200).then do
 		document.getElementsByTagName('button')[0].focus
