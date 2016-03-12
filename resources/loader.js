@@ -1,26 +1,26 @@
 (function(){
-	
+
 	Manager = {
 		_apps: [],
 		_suites: []
 	};
-	
+
 	Manager.add = function (suite){
 		return this._suites.push(suite);
 	};
-	
+
 	Manager.suites = function (){
 		return this._suites;
 	};
-	
+
 	Manager.chart = function (series){
 		if (this._chart) {
 			this._chart.addSeries(series);
 			return this._chart;
 		};
-		
+
 		var categories = this._suites.map(function(suite) { return suite.option('label'); });
-		
+
 		return this._chart = new Highcharts.Chart({
 			chart: {type: 'bar',renderTo: 'chart'},
 			title: {text: "Results"},
@@ -28,30 +28,30 @@
 			xAxis: {
 				categories: [] // categories
 			},
-			
+
 			yAxis: {
 				min: 0,
 				title: {text: 'ops / sec (higher is better)'}
 			},
-			
+
 			tooltip: {
 				pointFormatter: function(v) { return ("" + (this.category) + " <b>") + this.y.toFixed(2) + "</b> ops/sec<br>"; },
 				shared: true
 			},
-			
+
 			plotOptions: {bar: {dataLabels: {enabled: false}}},
 			credits: {enabled: false},
 			series: [series]
 		});
 	};
-	
+
 	function div(cls,text){
 		var el = document.createElement('div');
 		el.className = cls || '';
 		el.textContent = text || '';
 		return el;
 	};
-	
+
 	function Framework(name,o){
 		if(o === undefined) o = {};
 		dict[name] = this;
@@ -61,22 +61,22 @@
 		this._options = o;
 		this._ready = false;
 	};
-	
+
 	var dict = {};
 	var all = [];
-	
+
 	Framework.get = function (name){
 		return dict[name];
 	};
-	
+
 	Framework.map = function (fn){
 		return all.map(fn);
 	};
-	
+
 	Framework.count = function (){
 		return all.length;
 	};
-	
+
 	Framework.build = function (){
 		return this._build || (this._build = Promise.reduce(all,function(curr,next) {
 			return curr.build().then(function() {
@@ -84,43 +84,43 @@
 			});
 		}));
 	};
-	
+
 	Framework.prototype.name = function (){
 		return this._name;
 	};
-	
+
 	Framework.prototype.title = function (){
 		return this._title;
 	};
-	
+
 	Framework.prototype.color = function (){
 		return this._options.color || 'red';
 	};
-	
+
 	Framework.prototype.url = function (){
 		return this._options.url || ("todomvc/" + (this._name) + "/index.html");
 	};
-	
+
 	Framework.prototype.node = function (){
 		return this._node || (this._node = div());
 	};
-	
+
 	Framework.prototype.iframe = function (){
 		return this._iframe || (this._iframe = document.createElement('iframe'));
 	};
-	
+
 	Framework.prototype.doc = function (){
 		return this._iframe.contentDocument;
 	};
-	
+
 	Framework.prototype.win = function (){
 		return this._win || (this._win = this._iframe.contentWindow);
 	};
-	
+
 	Framework.prototype.api = function (){
 		return this._api || (this._api = this._iframe.contentWindow.API);
 	};
-	
+
 	Framework.prototype.build = function (){
 		var self = this;
 		return self._build || (self._build = new Promise(function(resolve) {
@@ -130,7 +130,7 @@
 			window.apps.appendChild(self.node());
 			self.node().appendChild(self._header = div('header',self.title()));
 			self.node().appendChild(self.iframe());
-			
+
 			var wait = function() {
 				if (self.doc().querySelector('#header h1,.header h1') && self.api().RENDERCOUNT > 0) {
 					self.api().ready();
@@ -142,12 +142,12 @@
 			return wait();
 		}));
 	};
-	
+
 	Framework.prototype.prepare = function (){
 		// win:localStorage.clear
 		return this.reset(6);
 	};
-	
+
 	Framework.prototype.reset = function (count){
 		this.api().AUTORENDER = false;
 		// api.clearAllTodos
@@ -159,22 +159,22 @@
 		this.api().AUTORENDER = true;
 		return this;
 	};
-	
+
 	Framework.prototype.deactivate = function (){
 		return this.node().classList.remove('running');
 	};
-	
+
 	Framework.prototype.activate = function (){
 		return this.node().classList.add('running');
 	};
-	
+
 	Framework.prototype.setStatus = function (status){
 		this._header.textContent = status;
 		this;
 		return this;
 	};
-	
-	
+
+
 	function Bench(o){
 		var self = this;
 		if(o === undefined) o = {};
@@ -184,7 +184,7 @@
 		this._step = -1;
 		this._current = null;
 		this._benchmarks = [];
-		
+
 		if (o.step instanceof Function) {
 			Framework.map(function(app) {
 				self._suite.add(app.name(),o.step);
@@ -193,37 +193,37 @@
 				return self._benchmarks.push(bm);
 			});
 		};
-		
+
 		console.log(self._suite);
 		Manager.add(self);
 		self.bind();
 		self;
 	};
-	
+
 	Bench.prototype.option = function (key){
 		return this._options[key];
 	};
-	
+
 	Bench.prototype.step = function (idx){
 		this._step = idx;
 		if (this._current) {
 			this._current.App.deactivate();
 		};
-		
+
 		if (this._current = this._benchmarks[idx]) {
 			this._current.App.activate();
 		};
 		return this;
 	};
-	
-	
+
+
 	Bench.prototype.bind = function (){
-		
+
 		var self = this;
 		self._suite.on('start',function(e) {
 			console.log("start");
 			document.body.classList.add('running');
-			
+
 			Framework.map(function(ex) {
 				ex.api().FULLRENDER = true;
 				ex.api().RENDERCOUNT = -1;
@@ -232,19 +232,19 @@
 			self.step(0);
 			return;
 		});
-		
+
 		self._suite.on('reset',function(e) {
 			console.log('suite onReset');
 			return;
 		});
-		
+
 		self._suite.on('cycle',function(event) {
 			console.log("cycle!");
 			Framework.get(event.target.name).setStatus(String(event.target));
 			self.step(self._step + 1);
 			return;
 		});
-		
+
 		return self._suite.on('complete',function() {
 			console.log('Fastest is ' + this.filter('fastest').pluck('name'));
 			document.body.classList.remove('running');
@@ -252,7 +252,7 @@
 			return;
 		});
 	};
-	
+
 	Bench.prototype.run = function (){
 		var self = this;
 		return Framework.build().then(function() {
@@ -261,7 +261,7 @@
 			return self._suite.run({async: true,queued: false});
 		});
 	};
-	
+
 	Bench.prototype.reset = function (){
 		Framework.map(function(ex) {
 			ex.api().FULLRENDER = true;
@@ -270,13 +270,13 @@
 		});
 		return this;
 	};
-	
+
 	Bench.prototype.warmup = function (times){
 		var self = this;
 		if(times === undefined) times = 1000;
 		this.reset();
 		setTimeout(function() {
-			
+
 			var fn = self._options.step;
 			var apps = Framework.map(function(app) { return app; });
 			var step = function() {
@@ -293,72 +293,73 @@
 					return setTimeout(function() { return step(); },50);
 				};
 			};
-			
+
 			return step();
 		},50);
-		
+
 		return self;
 	};
-	
-	
+
+
 	Bench.prototype.present = function (){
 		// create div
 		console.log('present');
 		var el = div('chart');
 		window.analysis.appendChild(el);
-		
+
 		// find slowest
 		var sorted = this._benchmarks.slice().sort(function(a,b) { return a.hz - b.hz; });
 		var base = sorted[0].hz;
 		var series = this._benchmarks.map(function(b) { return {type: 'bar',borderWidth: 0,name: b.App.title(),data: [b.hz]}; });
-		
+
 		return this._chart = new Highcharts.Chart({
 			chart: {type: 'bar',renderTo: el},
-			
+
 			title: {
 				text: this.option('title'),
 				style: {
 					fontSize: "14px"
 				}
 			},
-			
+
 			loading: {
 				showDuration: 0
 			},
-			
+
 			xAxis: {
 				categories: [this.option('title')],
 				tickColor: 'transparent',
 				labels: {enabled: false}
 			},
-			
+
 			yAxis: {
 				min: 0,
 				title: {text: 'ops / sec (higher is better)'}
 			},
-			
+
 			tooltip: {
 				pointFormatter: function(v) { return "<b>" + this.y.toFixed(2) + ("</b> ops/sec (<b>" + (this.y / base).toFixed(2) + "x</b>)<br>"); }
 			// shared: true
 			},
-			
+
 			legend: {
 				verticalAlign: 'top',
 				y: 20
 			},
-			
+
 			plotOptions: {bar: {dataLabels: {enabled: true,formatter: function(v) { return ("<b>" + (this.y / base).toFixed(2) + "x</b>"); }}}},
 			credits: {enabled: false},
 			series: series.reverse()
 		});
 	};
-	
-	
+
+
 	new Framework('react',{title: 'react v0.13.3'});
 	new Framework('imba-0.14.3',{title: 'imba v0.14.3'});
 	new Framework('imba-dev',{title: 'imba v0.15.0-alpha.1'});
 	new Framework('mithril',{title: 'mithril v0.2.0'});
-	
+	new Framework('riot',{title: 'riot v2.2.4'});
+
 	EVERYTHING = new Bench(
 		{label: 'Bench Everything',
 		title: 'Everything (remove, toggle, append, rename)',
@@ -366,13 +367,13 @@
 			var len = this.App._todoCount;
 			var api = this.App.api();
 			var idx = Math.round(Math.random() * (len - 1));
-			
+
 			// moving a random task
 			idx = api.RENDERCOUNT % len;
 			idx = Math.min(0,len - 2);
 			var todo = api.removeTodoAtIndex(idx);
 			api.insertTodoAtIndex(todo,1000);
-			
+
 			api.render(true);
 			api.toggleTodoAtIndex((idx) % len);
 			api.render(true);
@@ -381,7 +382,7 @@
 			return;
 		}}
 	);
-	
+
 	new Bench(
 		{label: 'Reorder',
 		title: 'Reorder (shift+push)',
@@ -394,7 +395,7 @@
 			return;
 		}}
 	);
-	
+
 	// full rendering including todo-renaming
 	new Bench(
 		{label: 'Rename todo',
@@ -409,7 +410,7 @@
 			return;
 		}}
 	);
-	
+
 	new Bench(
 		{label: 'Toggle todo',
 		title: 'Toggle random todo',
@@ -421,16 +422,16 @@
 			return;
 		}}
 	);
-	
-	
+
+
 	// full rendering
 	new Bench(
 		{label: 'Unchanged render',
 		title: 'Unchanged render',
 		step: function() { return this.App.api().render(true); }}
 	);
-	
-	
+
+
 	Manager.suites().map(function(suite) {
 		var btn = document.createElement('button');
 		btn.textContent = suite.option('label');
@@ -440,13 +441,13 @@
 		};
 		return window.controls.appendChild(btn);
 	});
-	
-	
+
+
 	// window:runFullRender:onclick = do full.run
 	// Suites.fullRender.run({ async: true, queued: false })
-	
+
 	window.apps.setAttribute("data-count",Framework.count());
-	
+
 	return Framework.build().then(function(res) {
 		console.log("built",res);
 		return Promise.delay(200).then(function() {
