@@ -146,7 +146,7 @@ label[for='toggle-all'] {
 }
 
 .todo-list li.editing {
-	border-bottom: none;
+	border-bottom: 1px solid #ededed;
 	padding: 0;
 }
 
@@ -230,7 +230,7 @@ label[for='toggle-all'] {
 }
 
 .todo-list li.editing:last-child {
-	margin-bottom: -1px;
+	margin-bottom: 0px;
 }
 
 .footer {

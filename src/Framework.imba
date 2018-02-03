@@ -4,18 +4,39 @@ export class Framework
 
 	prop performance
 	prop timings
+	prop result
 	
 	def initialize o = {}
 		@options = o
 		@title = @name = o:name
 		@ready = false
+		@status = ""
 		@timings = {}
-		@node = <div.app>
-			<header@header> name
-			<iframe@frame src=url css:minHeight='400px'>
+		# @node = <div.app css:color=o:color>
+		# 	<header@header> name
+		# 	<iframe@frame src=url css:minHeight='400px'>
+		node
 		build
+		
+	def node
+		<div@node.app css:color=@options:color>
+			<header@header> @status
+			<iframe@frame src=url css:minHeight='340px'>
+			<footer[result]>
+				if result
+					<div.ops>
+						<span.value> Math.round(result:hz)
+						<i> "ops/sec"
+					<div.small.compare>
+						if result:hz >= result:fastest:hz
+							<span> "1x"
+						elif result:hz < result:fastest:hz
+							<span.x> (result:fastest:hz / result:hz).toFixed(2) + 'x'
+							<i> "slower"
+				<div.small.size>
+					<i> 'library'
+					<span.value> @options:libSize
 
-	def node do @node
 	def name do @name
 	def title do @title
 	def color do @options:color or 'red'
@@ -48,11 +69,10 @@ export class Framework
 		api.AUTORENDER = no
 		api.RENDERCOUNT = 0
 		api.FULLRENDER = yes
-		# reset / remove all todos
 		api.clearAllTodos
 		api.addTodo("Todo " + i) for i in [1..count]
 		api.@todoCount = count
-		api.render(true)
+		api.forceUpdate(true)
 		api.RENDERCOUNT = 0
 		self
 
@@ -63,5 +83,7 @@ export class Framework
 		node.flag('running')
 
 	def status= status
-		@header.text = status
-		self
+		@status = status
+		node
+		# @header.text = status
+		# self

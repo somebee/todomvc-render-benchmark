@@ -1,6 +1,10 @@
 
 API = {
-	// Always on for now	
+	store: {
+		counter: 0,
+		todos: []
+	},
+	// Always on for now
 	AUTORENDER: true, 
 
 	AUTOPERSIST: false,
@@ -26,33 +30,38 @@ API.ready = function(){
 	// Could be useful for overriding stuff
 }
 
+API.render = function(i){
+
+}
+
 // synchronous render
 // should bring the view in sync with models++
 // no matter how or where the models have changed
-API.render = function(force){
-	// render app
-	return API.RENDERCOUNT;
+API.forceUpdate = function(force){
+	this.render(this.store.counter);
+	this.store.counter++;
+	return this.store.counter;
 }
 
 // Add todo with title
 // app should NOT render or persist to localstorage
 API.addTodo = function(title) {
-	app.model.addTodo(title);
+	this.store.addTodo(title);
 }
 
 // expose interface for renaming todo
 API.renameTodoAtIndex = function(index,title) {
-	var todo = app.model.todos[index];
+	var todo = this.store.todos[index];
 	todo.title = title;
 	return todo;
 }
 
 API.getTodoAtIndex = function (index){
-	return app.model.todos[index];
+	return this.store.todos[index];
 };
 
 API.insertTodoAtIndex = function (todo,index){
-	var list = app.model.todos;
+	var list = this.store.todos;
 	var len  = list.length;
 	var from = list.indexOf(todo);
 
@@ -67,20 +76,21 @@ API.insertTodoAtIndex = function (todo,index){
 
 API.removeTodoAtIndex = function (index){
 	var todo = API.getTodoAtIndex(index);
-	app.model.todos.splice(index,1);
+	this.store.todos.splice(index,1);
 	return todo;
 };
 
 API.clearAllTodos = function() {
-	app.model.clearAll();
+	this.store.todos.length = 0; // clearAll();
 }
 
 // return plain array of actual todo items
 API.getTodos = function(){
-	return app.model.todos;
+	return this.store.todos;
 }
 
 API.toggleTodoAtIndex = function(index) {
-	var todo = API.getTodos()[index];
+	var todo = this.store.todos[index];
 	todo.completed = !todo.completed;
+	return todo;
 }

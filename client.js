@@ -418,11 +418,11 @@ var store = {
 };
 
 var apps = [
-	{name: 'imba@1.3.0',path: "imba-1.3.0/index.html"},
-	{name: 'vue',path: "vue/index.html"},
-	{name: 'react@16.prod',path: "react-16/index.html"}
-// {name: 'react@16.dev', path: "react-16/index.dev.html"}
-].reverse().map(function(options) { return new Framework(options); });
+	{name: 'imba@1.3.0',path: "imba-1.3.0/index.html",color: '#709CB2',libSize: '49kb'},
+	{name: 'vue@2.5.13',path: "vue-2.5/index.html",color: '#4fc08d',libSize: '87kb'},
+	{name: 'react@16.prod',path: "react-16/index.html",color: 'rgb(15, 203, 255)',libSize: '101kb'},
+	{name: 'react@16.dev',path: "react-16/index.dev.html",color: 'rgb(15, 203, 255)'}
+].map(function(options) { return new Framework(options); });
 
 var tests = {};
 
@@ -436,6 +436,7 @@ tests.main = {
 		var idx = i % count;
 		var action = i % 5;
 		var cycle = Math.floor(i / 5);
+		// console.log(i,idx,action)
 		
 		switch (action) {
 			case 0: { // remove remove first item
@@ -462,135 +463,94 @@ tests.main = {
 			}
 		};
 		
-		app.render(true);
+		app.forceUpdate(true);
 		return;
 	}
 };
 
-
-
-function Chart(id){
-	this._series = apps.map(function(app) { return {type: 'bar',borderWidth: 0,name: app.name(),data: []}; });
+var App = _T.defineTag('App', function(tag){
 	
-	this._categories = apps.map(function(app) { return app.name(); });
+	tag.prototype.bench = function(v){ return this._bench; }
+	tag.prototype.setBench = function(v){ this._bench = v; return this; };
 	
-	var k = function(val) {
-		return Math.round(val);
-		return Math.round(val / 1000) + 'k';
+	tag.prototype.count = function (){
+		return parseInt(this._itemcount.value());
 	};
 	
-	var options = {
-		type: 'bar',
-		animation: false,
-		chart: {
-			type: 'bar',
-			renderTo: document.getElementById(id),
-			animation: false,
-			title: null
-		},
-		loading: {showDuration: 0},
-		xAxis: {id: 'cats',categories: this._categories,tickColor: 'transparent',labels: {enabled: true}},
-		yAxis: {min: 0,title: {text: 'ops/sec'}},
-		tooltip: {
-			pointFormatter: function(v) { return ("<b>" + k(this.y) + "/s</b><br>"); } //  (<b>{(this:y / base).toFixed(2)}x</b>)
-		},
-		plotOptions: {bar: {dataLabels: {enabled: true,formatter: function(v) { return ("<b>" + k(this.y) + "/s</b>"); }}}},
-		credits: {enabled: false},
-		series: []
-	};
-	
-	// @categories = []
-	this._suites = [];
-	this._chart = window.C = new Highcharts.Chart(options);
-};
-
-Chart.prototype.add = function (suite){
-	let nr = this._suites.push(suite);
-	if (true) {
-		let res = [];
-		for (let i = 0, items = iter$(suite.suite()), len = items.length; i < len; i++) {
-			res.push(items[i].hz);
-		};
-		var points = res;
-		var series = {type: 'bar',borderWidth: 0,name: suite.name(),data: points};
-		return this._chart.addSeries(series);
-	};
-};
-
-
-var chart;
-var run = function(bench,times) {
-	console.log("run test!!");
-	var count = parseInt(Imba.getTagSingleton('itemcount').value());
-	bench.count = count;
-	bench.title = ("" + count + " todos");
-	store.runs.push(store.run = new Bench(bench,apps));
-	store.run.suite().on('complete',function() {
-		console.log("completede benchmark!");
-		chart || (chart = new Chart('chart'));
-		return chart.add(store.run);
-	});
-	
-	if ((typeof times=='number'||times instanceof Number)) {
-		return store.run.warmup(times);
-	} else {
+	tag.prototype.run = function (){
+		var bench = tests.main;
+		bench.count = this.count();
+		bench.title = ("" + this.count() + " todos");
+		store.runs.push(store.run = new Bench(bench,apps));
 		return store.run.run();
 	};
-};
-
-var step = function(times) {
-	for (let j = 0, items = iter$(apps), len = items.length, app; j < len; j++) {
-		app = items[j];
-		let i = 100;
-		app.api().AUTORENDER = false;
-		while (--i > 0){
-			tests.main.step(app.api(),app.api().RENDERCOUNT);
+	
+	tag.prototype.reset = function (){
+		for (let i = 0, items = iter$(apps), len = items.length; i < len; i++) {
+			items[i].reset(this.count());
 		};
-		app.api().AUTORENDER = true;
+		return this;
 	};
-	return;
-};
-
-var reset = function() {
-	let res = [];
-	for (let i = 0, items = iter$(apps), len = items.length; i < len; i++) {
-		res.push(items[i].reset(parseInt(Imba.getTagSingleton('itemcount').value())));
+	
+	tag.prototype.step = function (times){
+		
+		if(times === undefined) times = 100;
+		for (let j = 0, items = iter$(apps), len = items.length, app; j < len; j++) {
+			app = items[j];
+			let i = times;
+			app.api().AUTORENDER = false;
+			while (i > 0){
+				tests.main.step(app.api(),app.api().store.counter);
+				i--;
+			};
+			app.api().AUTORENDER = true;
+		};
+		return this;
 	};
-	return res;
-};
+	
+	tag.prototype.render = function (){
+		var self = this, $ = self.$;
+		return this.flag('benchmark').setChildren([
+			($.A=$.A || _T.$('header',this).setId('header')).setContent([
+				(self._itemcount || _T.$('input',self).ref_('itemcount',self).setType("number").setValue("6")).end(),
+				($.B=$.B || _T.$('span',self).setText("todos ")).end(),
+				($.C=$.C || _T.$('button',self).on('tap','reset',0).setText("reset")).end(),
+				($.D=$.D || _T.$('button',self).on('tap.alt',['step',1],0).on('tap',['step',13],1).setText("step")).end(),
+				($.E=$.E || _T.$('span',self).flag('flex')).end(),
+				($.F=$.F || _T.$('button',self).on('tap','run',0).setText("Run benchmark")).end()
+			],2).end(),
+			
+			($.G=$.G || _T.$('section',self).flag('apps')).setContent(
+				(function() {
+					let res = [];
+					for (let i = 0, items = iter$(apps), len = items.length; i < len; i++) {
+						res.push(items[i].node());
+					};
+					return res;
+				})()
+			,3).end(),
+			($.H=$.H || _T.$('section',self).flag('runs')).setContent(
+				($.I=$.I || _T.$('div',self).setId('chart')).end()
+			,2).end()
+		],2).synced();
+	};
+});
 
+Imba.mount(App.build(this).end());
 
-Imba.mount(_T.$('div',this).setTemplate(function() {
-	var $ = this.$, self = this;
-	return Imba.static([
-		($.a=$.a || _T.$('header',this).setId('header')).setContent([
-			($.b=$.b || _T.$('input',this).setId('itemcount').setType("number").setValue("6")).end(),
-			(function() {
-				var _$ = ($.c = $.c || []), _$1 = ($.d = $.d || []);
-				let res = [];
-				for (let desc, i = 0, keys = Object.keys(tests), l = keys.length, name; i < l; i++){
-					name = keys[i];desc = tests[name];res.push((_$[i]=_$[i] || _T.$('button',self)).on('tap',[run,desc],0).setContent(name,3).end());
-					res.push((_$1[i]=_$1[i] || _T.$('button',self).setText("warmup")).on('tap',[run,desc,19234],0).end());
-				};
-				return res;
-			})(),
-			($.e=$.e || _T.$('button',self).setText("step")).on('tap',step,0).end(),
-			($.f=$.f || _T.$('button',self).setText("reset")).on('tap',reset,0).end()
-		],1).end(),
-		($.g=$.g || _T.$('section',self).flag('apps')).setContent(
-			(function() {
-				let res = [];
-				for (let i = 0, items = iter$(apps), len = items.length; i < len; i++) {
-					res.push(items[i].node());
-				};
-				return res;
-			})()
-		,3).end(),
-		($.h=$.h || _T.$('section',self).flag('runs')).setContent(
-			($.i=$.i || _T.$('div',self).setId('chart')).end()
-		,2).end()
-	],1);
-}).end());
+// Imba.mount <div.benchmark ->
+// 	<header#header>
+// 		<input#itemcount type="number" value="6">
+// 		<span> "todos "
+// 		<button :tap=[run,tests:main]> "Run"
+// 		<button :tap=reset> "reset"
+// 		<button :tap=step> "step"
+// 
+// 	<section.apps>
+// 		for app in apps
+// 			app.node
+// 	<section.runs>
+// 		<div#chart>
 
 
 
@@ -3691,6 +3651,8 @@ Imba.EventManager.prototype.onenable = function (){
 		item = items[i];
 		this.root().addEventListener(item[0],item[1],item[2]);
 	};
+	
+	window.addEventListener('hashchange',Imba.commit);
 	return this;
 };
 
@@ -3703,6 +3665,8 @@ Imba.EventManager.prototype.ondisable = function (){
 		item = items[i];
 		this.root().removeEventListener(item[0],item[1],item[2]);
 	};
+	
+	window.removeEventListener('hashchange',Imba.commit);
 	return this;
 };
 
@@ -4133,6 +4097,7 @@ if (apple) {
 /* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
+function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 var Imba = __webpack_require__(1), _T = Imba.TAGS;
 
 // externs;
@@ -4150,7 +4115,7 @@ function Bench(o,apps){
 	
 	var fn = function() {
 		var api = this.app.api();
-		o.step.call(this,api,api.RENDERCOUNT);
+		o.step.call(this,api,api.store.counter);
 		return;
 	};
 	
@@ -4159,8 +4124,10 @@ function Bench(o,apps){
 	// @fn = do fn(@i++,this:app
 	window.S = self._suite = new Benchmark.Suite(self._name);
 	// add each benchmark
-	apps.map(function(app) { return self._suite.add(app.name(),fn,{app: app}); });
-	
+	apps.map(function(app,i) {
+		self._suite.add(app.name(),fn,{app: app});
+		return self[app.name()] = self._suite[i];
+	});
 	console.log(self._suite);
 	self.bind();
 	self;
@@ -4233,9 +4200,17 @@ Bench.prototype.bind = function (){
 	});
 	
 	return self._suite.on('complete',function() {
+		var fastest = this.filter('fastest').pluck('name');
 		console.log('Fastest is ' + this.filter('fastest').pluck('name'));
 		document.body.classList.remove('running');
 		// present
+		for (let i = 0, items = iter$(self.apps()), len = items.length, app; i < len; i++) {
+			app = items[i];
+			let bench = self[app.name()];
+			bench.fastest = self[fastest];
+			app.setResult(bench);
+			console.log("setting result",bench);
+		};
 		Imba.commit();
 		return;
 	});
@@ -4327,11 +4302,12 @@ function Framework(o){
 	this._options = o;
 	this._title = this._name = o.name;
 	this._ready = false;
+	this._status = "";
 	this._timings = {};
-	this._node = _T.$('div',this).flag('app').setContent([
-		(this._header || _T.$('header',this).ref_('header',this)).setContent(this.name(),3).end(),
-		(this._frame || _T.$('iframe',this).ref_('frame',this).css('minHeight','400px')).setSrc(this.url()).end()
-	],2).end();
+	// @node = <div.app css:color=o:color>
+	// 	<header@header> name
+	// 	<iframe@frame src=url css:minHeight='400px'>
+	this.node();
 	this.build();
 };
 
@@ -4340,10 +4316,37 @@ Framework.prototype.performance = function(v){ return this._performance; }
 Framework.prototype.setPerformance = function(v){ this._performance = v; return this; };
 Framework.prototype.timings = function(v){ return this._timings; }
 Framework.prototype.setTimings = function(v){ this._timings = v; return this; };
+Framework.prototype.result = function(v){ return this._result; }
+Framework.prototype.setResult = function(v){ this._result = v; return this; };
 
 Framework.prototype.node = function (){
-	return this._node;
+	var t0;
+	return (t0 = this._node || _T.$('div',this).ref_('node',this).flag('app')).css('color',this._options.color).setContent([
+		(this._header || _T.$('header',this).ref_('header',this)).setContent(this._status,3).end(),
+		(this._frame || _T.$('iframe',this).ref_('frame',this).css('minHeight','340px')).setSrc(this.url()).end(),
+		(t0.$.a=t0.$.a || _T.$('footer',this)).setData(this.result()).setContent([
+			this.result() ? Imba.static([
+				(t0.$.b=t0.$.b || _T.$('div',this).flag('ops')).setContent([
+					(t0.$.c=t0.$.c || _T.$('span',this).flag('value')).setContent(Math.round(this.result().hz),3).end(),
+					(t0.$.d=t0.$.d || _T.$('i',this).setText("ops/sec")).end()
+				],2).end(),
+				(t0.$.e=t0.$.e || _T.$('div',this).flag('small').flag('compare')).setContent([
+					(this.result().hz >= this.result().fastest.hz) ? (
+						(t0.$.f=t0.$.f || _T.$('span',this).setText("1x")).end()
+					) : ((this.result().hz < this.result().fastest.hz) ? Imba.static([
+						(t0.$.g=t0.$.g || _T.$('span',this).flag('x')).setContent((this.result().fastest.hz / this.result().hz).toFixed(2) + 'x',3).end(),
+						(t0.$.h=t0.$.h || _T.$('i',this).setText("slower")).end()
+					],2) : void(0))
+				],1).end()
+			],2) : void(0),
+			(t0.$.i=t0.$.i || _T.$('div',this).flag('small').flag('size')).setContent([
+				(t0.$.j=t0.$.j || _T.$('i',this).setText('library')).end(),
+				(t0.$.k=t0.$.k || _T.$('span',this).flag('value')).setContent(this._options.libSize,3).end()
+			],2).end()
+		],1).end()
+	],2).end();
 };
+
 Framework.prototype.name = function (){
 	return this._name;
 };
@@ -4399,13 +4402,12 @@ Framework.prototype.reset = function (count){
 	this.api().AUTORENDER = false;
 	this.api().RENDERCOUNT = 0;
 	this.api().FULLRENDER = true;
-	// reset / remove all todos
 	this.api().clearAllTodos();
 	for (let len = count, i = 1, rd = len - i; (rd > 0) ? (i <= len) : (i >= len); (rd > 0) ? (i++) : (i--)) {
 		this.api().addTodo("Todo " + i);
 	};
 	this.api()._todoCount = count;
-	this.api().render(true);
+	this.api().forceUpdate(true);
 	this.api().RENDERCOUNT = 0;
 	return this;
 };
@@ -4419,8 +4421,10 @@ Framework.prototype.activate = function (){
 };
 
 Framework.prototype.setStatus = function (status){
-	this._header.setText(status);
-	this;
+	this._status = status;
+	this.node();
+	// @header.text = status
+	// self
 	return this;
 };
 

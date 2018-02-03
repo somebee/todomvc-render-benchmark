@@ -60,7 +60,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 3);
+/******/ 	return __webpack_require__(__webpack_require__.s = 2);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -326,13 +326,6 @@ module.exports = Imba;
 /* 1 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(4);
-
-
-/***/ }),
-/* 2 */
-/***/ (function(module, exports, __webpack_require__) {
-
 var Imba = __webpack_require__(0);
 
 Imba.Pointer = function Pointer(){
@@ -402,18 +395,84 @@ Imba.Pointer.prototype.y = function (){
 
 
 /***/ }),
-/* 3 */
+/* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
-var Imba = __webpack_require__(1), _T = Imba.TAGS;
+var Imba = __webpack_require__(3), _T = Imba.TAGS;
 
-var Store = __webpack_require__(14).Store;
-Todos = new Store('imba-todos');
+var store = {
+	nextId: 0,
+	counter: 0,
+	todos: [],
+	allDone: false,
+	
+	addTodo: function(title) {
+		return this.todos.push({id: this.nextId++,title: title,completed: false});
+	},
+	
+	removeTodo: function(item) {
+		return this.todos.splice(this.todos.indexOf(item),1);
+	},
+	
+	toggleAll: function(state) {
+		for (let i = 0, items = iter$(this.todos), len = items.length; i < len; i++) {
+			items[i].completed = state;
+		};
+		return;
+	}
+};
 
-var Todo = __webpack_require__(15).Todo;
+var Input = _T.defineTag('Input', 'input', function(tag){
+	tag.prototype.onchange = function (){
+		return this;
+	};
+});
 
-var ENTER_KEY = 13;
+var Todo = _T.defineTag('Todo', 'li', function(tag){
+	
+	tag.prototype.render = function (){
+		// var todo = @data
+		var self = this, $ = self.$;
+		return this.flag('completed',(this._data.completed)).setChildren([
+			($.A=$.A || _T.$('div',this).flag('view')).setContent([
+				($.B=$.B || _T.$('label',self).on('dblclick','edit',0)).setText("" + (self._data.title)).end(),
+				(self._toggle || _T.$('input',self).ref_('toggle',self).setType('checkbox').on('change','toggle',0)).setChecked((self._data.completed)).end(),
+				($.C=$.C || _T.$('button',self).flag('destroy').on('tap','drop',0)).end()
+			],2).end(),
+			(self._input || _T.$('input',self).ref_('input',self).flag('edit').setType('text').on('keydown.enter','submit',0).on('keydown.esc','cancel',1)).end()
+		],2).synced();
+	};
+	
+	tag.prototype.edit = function (){
+		var self = this;
+		self.flag('editing');
+		self._input.setValue(self.data().title);
+		return setTimeout(function() { return self._input.focus(); },10);
+	};
+	
+	tag.prototype.drop = function (){
+		return store.removeTodo(this.data());
+	};
+	
+	tag.prototype.toggle = function (e){
+		return this.data().completed = !this.data().completed;
+	};
+	
+	tag.prototype.submit = function (){
+		this.unflag('editing');
+		return (this.data().title = this._input.value().trim()) || this.drop();
+	};
+	
+	tag.prototype.onfocusout = function (e){
+		if (this.hasFlag('editing')) { return this.submit() };
+	};
+	
+	tag.prototype.cancel = function (){
+		this.unflag('editing');
+		return this._input.blur();
+	};
+});
 
 var App = _T.defineTag('App', function(tag){
 	
@@ -421,57 +480,33 @@ var App = _T.defineTag('App', function(tag){
 		return this._hash;
 	};
 	
-	tag.prototype.model = function (){
-		return this._model;
-	};
-	
-	tag.prototype.build = function (){
-		var self = this;
-		self._model = Todos;
-		self._model.load();
-		self._model.subscribe(function() { return self.render(); });
-		window.addEventListener('hashchange',function() {
-			self._hash = window.location.hash;
-			return self.render();
-		});
-		self.render();
-		return self;
-	};
-	
-	tag.prototype.onkeydown = function (e){
+	tag.prototype.addItem = function (){
 		var value, v_;
-		if (e.which() != ENTER_KEY) { return };
-		
-		if (value = e.target().value().trim()) {
-			this.model().addTodo(value);
-			return (e.target().setValue(v_ = ""),v_);
+		if (value = this._newfield.value().trim()) {
+			this.data().addTodo(value);
+			return (this._newfield.setValue(v_ = ""),v_);
 		};
 	};
 	
-	
-	tag.prototype.toggleAll = function (e){
-		return this.model().toggleAll(e.target().checked());
-	};
-	
-	// remove all completed todos
-	tag.prototype.clearCompleted = function (){
-		this._toggler.setChecked(false);
-		return this.model().clearCompleted();
-	};
-	
-	tag.prototype.list = function (items){
+	tag.prototype.toggleAll = function (){
+		let value = this.data().allDone = !this.data().allDone;
 		let res = [];
-		for (let i = 0, ary = iter$(items), len = ary.length; i < len; i++) {
-			res.push(Todo.build(this).setData(ary[i]).end());
+		for (let i = 0, items = iter$(store.todos), len = items.length; i < len; i++) {
+			res.push((items[i].completed = value));
 		};
 		return res;
 	};
 	
+	// remove all completed todos
+	tag.prototype.clearCompleted = function (){
+		this.data().todos = this.data().todos.filter(function(item) { return !item.completed; });
+		return this.data().allDone = false;
+	};
+	
 	tag.prototype.render = function (){
 		var self = this, $ = self.$;
-		API.RENDERCOUNT++;
-		
-		var all = Todos._items;
+		this._hash = ''; // document:location:hash
+		var all = this.data().todos;
 		var items = all;
 		var done = [];
 		var active = [];
@@ -489,13 +524,13 @@ var App = _T.defineTag('App', function(tag){
 		
 		return this.setChildren([
 			($.A=$.A || _T.$('header',this).flag('header')).setContent([
-				($.B=$.B || _T.$('h1',self)).setText("todos " + (API.RENDERCOUNT)).end(),
-				($.C=$.C || _T.$('input',self).flag('new-todo').setType('text').setPlaceholder('What needs to be done?').setAutofocus(true)).end()
+				($.B=$.B || _T.$('h1',self)).setText("todos " + (self.data().counter)).end(),
+				(self._newfield || _T.$('input',self).ref_('newfield',self).flag('new-todo').setType('text').setPlaceholder('What needs to be done?').setAutofocus(true).on('keydown.enter','addItem',0)).end()
 			],2).end(),
 			
 			(all.length > 0) ? (
-				($.D=$.D || _T.$('section',self).flag('main')).setContent([
-					(self._toggler || _T.$('input',self).ref_('toggler',self).flag('toggle-all').setType('checkbox').on('change','toggleAll',0)).end(),
+				($.C=$.C || _T.$('section',self).flag('main')).setContent([
+					($.D=$.D || _T.$('input',self).flag('toggle-all').on('tap','toggleAll',0).setType('checkbox')).setValue(self.data().allDone).end(),
 					($.E=$.E || _T.$('ul',self).flag('todo-list')).setContent((function() {
 						var $1 = ($.F = $.F || []);
 						for (let i = 0, ary = iter$(items), len = $1.taglen = ary.length; i < len; i++) {
@@ -509,15 +544,15 @@ var App = _T.defineTag('App', function(tag){
 				($.G=$.G || _T.$('footer',self).flag('footer')).setContent([
 					($.H=$.H || _T.$('span',self).flag('todo-count')).setContent([
 						($.I=$.I || _T.$('strong',self)).setText("" + (active.length) + " ").end(),
-						(active.length == 1) ? 'item left' : 'items left'
-					],1).end(),
-					($.J=$.J || _T.$('ul',self).flag('filters')).setContent([
-						($.K=$.K || _T.$('li',self)).setContent(($.L=$.L || _T.$('a',self).setHref('#/').setText('All')).flag('selected',(items == all)).end(),2).end(),
-						($.M=$.M || _T.$('li',self)).setContent(($.N=$.N || _T.$('a',self).setHref('#/active').setText('Active')).flag('selected',(items == active)).end(),2).end(),
-						($.O=$.O || _T.$('li',self)).setContent(($.P=$.P || _T.$('a',self).setHref('#/completed').setText('Completed')).flag('selected',(items == done)).end(),2).end()
+						($.J=$.J || _T.$('span',self)).setContent([(active.length == 1) ? 'item left' : 'items left'],1).end()
+					],2).end(),
+					($.K=$.K || _T.$('ul',self).flag('filters')).setContent([
+						($.L=$.L || _T.$('li',self)).setContent(($.M=$.M || _T.$('a',self).setHref('#/').setText('All')).flag('selected',(items == all)).end(),2).end(),
+						($.N=$.N || _T.$('li',self)).setContent(($.O=$.O || _T.$('a',self).setHref('#/active').setText('Active')).flag('selected',(items == active)).end(),2).end(),
+						($.P=$.P || _T.$('li',self)).setContent(($.Q=$.Q || _T.$('a',self).setHref('#/completed').setText('Completed')).flag('selected',(items == done)).end(),2).end()
 					],2).end(),
 					(done.length > 0) ? (
-						($.Q=$.Q || _T.$('button',self).flag('clear-completed').on('tap','clearCompleted',0).setText('Clear completed')).end()
+						($.R=$.R || _T.$('button',self).flag('clear-completed').on('tap','clearCompleted',0).setText('Clear completed')).end()
 					) : void(0)
 				],1).end()
 			) : void(0)
@@ -526,105 +561,28 @@ var App = _T.defineTag('App', function(tag){
 });
 
 
-
 // create an instance of the app (with id app)
-var app = App.build(this).setId('app').end();
+API.store = store;
 
-API.addTodo = function (title){
-	return Todos.addTodo(title);
-};
-
-API.renameTodoAtIndex = function (index,title){
-	var todo = Todos._items[index];
-	return todo.title = title;
-};
-
-API.clearAllTodos = function (){
-	return Todos.clearAll();
-};
+var app = App.build(this).setId('app').flag('todoapp').setData(store).end();
 
 API.render = function (){
-	app.render();
-	return API.RENDERCOUNT;
+	return app.render();
 };
 
-API.getTodoAtIndex = function (index){
-	return Todos._items[index];
-};
-
-API.removeTodoAtIndex = function (index){
-	var todo = API.getTodoAtIndex(index);
-	Todos._items.splice(index,1);
-	return todo;
-};
-
-API.insertTodoAtIndex = function (todo,index){
-	var len = Todos._items.length;
-	var from = Todos._items.indexOf(todo);
-	if (index >= len) {
-		Todos._items.push(todo);
-	} else {
-		Todos._items.splice(index,0,todo);
-	};
-	return todo;
-};
-
-API.toggleTodoAtIndex = function (index,autorender){
-	var todo = Todos._items[index];
-	todo.completed = !todo.completed;
-	if (autorender) { return API.render(true) };
-};
-
-var step = function(i) {
-	var api = API;
-	var len = api._todoCount;
-	var idx = Math.round(Math.random() * (len - 1));
-	
-	// moving a random task
-	idx = api.RENDERCOUNT % len;
-	idx = Math.min(0,len - 2);
-	var todo = api.removeTodoAtIndex(idx);
-	api.insertTodoAtIndex(todo,1000);
-	
-	api.render(true);
-	api.toggleTodoAtIndex((idx) % len);
-	api.render(true);
-	api.renameTodoAtIndex((idx + 1) % len,("Todo - " + (api.RENDERCOUNT)));
-	return api.render(true);
-};
-
-API.bench = function (times,fn){
-	if(fn==undefined && typeof times == 'function') fn = times,times = 100000;
-	if(times==undefined) times = 100000;
-	let count = 10;
-	
-	API.AUTORENDER = false;
-	// api.clearAllTodos
-	for (let len = count, i = 1, rd = len - i; (rd > 0) ? (i <= len) : (i >= len); (rd > 0) ? (i++) : (i--)) {
-		API.addTodo(("Todo " + i));
-	};
-	API._todoCount = count;
-	API.FULLRENDER = true;
-	var i = 0;
-	var start = new Date();
-	while (i++ < times){
-		step(i);
-	};
-	
-	var elapsed = new Date() - start;
-	API.render(true);
-	console.log("took",elapsed);
-	return this;
-};
-
-
-// append it to the dom
-document.querySelector('.todoapp').appendChild(app.dom());
+Imba.mount(app);
 API.READY = true;
-// $$(.todoapp).append app
 
 
 
+
+
+
+/***/ }),
+/* 3 */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__(4);
 
 
 /***/ }),
@@ -1076,7 +1034,7 @@ Imba.TagManager = new Imba.TagManagerClass();
 
 __webpack_require__(8);
 __webpack_require__(9);
-__webpack_require__(2);
+__webpack_require__(1);
 __webpack_require__(10);
 __webpack_require__(11);
 __webpack_require__(12);
@@ -3479,7 +3437,7 @@ Imba.Event.prototype.which = function (){
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 var Imba = __webpack_require__(0);
-__webpack_require__(2);
+__webpack_require__(1);
 
 /*
 
@@ -3695,6 +3653,8 @@ Imba.EventManager.prototype.onenable = function (){
 		item = items[i];
 		this.root().addEventListener(item[0],item[1],item[2]);
 	};
+	
+	window.addEventListener('hashchange',Imba.commit);
 	return this;
 };
 
@@ -3707,6 +3667,8 @@ Imba.EventManager.prototype.ondisable = function (){
 		item = items[i];
 		this.root().removeEventListener(item[0],item[1],item[2]);
 	};
+	
+	window.removeEventListener('hashchange',Imba.commit);
 	return this;
 };
 
@@ -4131,209 +4093,6 @@ if (apple) {
 		// optimization
 	};
 };
-
-
-/***/ }),
-/* 14 */
-/***/ (function(module, exports) {
-
-function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
-// externs;
-
-function Store(key){
-	this._key = key;
-	this._items = [];
-	this._listeners = [];
-};
-
-exports.Store = Store; // export class 
-var id = 0;
-
-Store.prototype.items = function(v){ return this._items; }
-Store.prototype.setItems = function(v){ this._items = v; return this; };
-
-Store.prototype.subscribe = function (fn){
-	return this._listeners.push(fn);
-};
-
-Store.prototype.inform = function (){
-	if (API.AUTORENDER) {
-		for (let i = 0, items = iter$(this._listeners), len = items.length; i < len; i++) {
-			items[i](this);
-		};
-	};
-	
-	if (API.AUTOPERSIST) {
-		this.store();
-	};
-	
-	return this;
-};
-
-Store.prototype.addTodo = function (title){
-	this.items().push({id: id++,title: title,completed: false});
-	return this.inform();
-};
-
-Store.prototype.toggleAll = function (state){
-	for (let i = 0, items = iter$(this.items()), len = items.length; i < len; i++) {
-		items[i].completed = state;
-	};
-	return this.inform();
-};
-
-Store.prototype.toggle = function (item){
-	item.completed = !item.completed;
-	return this.inform();
-};
-
-Store.prototype.destroy = function (item){
-	this.items().splice(this.items().indexOf(item),1);
-	return this.inform();
-};
-
-Store.prototype.rename = function (item,title){
-	item.title = title;
-	return this.inform();
-};
-
-Store.prototype.save = function (item,title){
-	item.title = title;
-	return this.inform();
-};
-
-Store.prototype.clearCompleted = function (){
-	this.setItems(this.items().filter(function(item) { return !item.completed; }));
-	return this.inform();
-};
-
-Store.prototype.clearAll = function (){
-	this.setItems([]);
-	return this.inform();
-};
-
-Store.prototype.load = function (){
-	this.setItems(JSON.parse(localStorage.getItem(this._key) || '[]'));
-	for (let i = 0, items = iter$(this.items()), len = items.length; i < len; i++) {
-		items[i].id = id++;
-	}; // setting unique id
-	return this.inform();
-};
-
-// persist todos to localstorage
-Store.prototype.store = function (){
-	var json = JSON.stringify(this.items());
-	if (json != this._json) { localStorage.setItem(this._key,this._json = json) };
-	return this;
-};
-
-
-
-
-
-
-/***/ }),
-/* 15 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var Imba = __webpack_require__(1), _T = Imba.TAGS;
-var ESCAPE_KEY = 27;
-var ENTER_KEY = 13;
-
-// this way of caching is not the 'Imba way' - it is merely a very simple way
-// to do something similar to React 'shouldComponentUpdate'. You can implement
-// this however you want - you merely try to figure out whether anything have
-// changed inside tag#commit, and then rerender if it has.
-var Todo = _T.defineTag('Todo', 'li', function(tag){
-	
-	tag.prototype.model = function (){
-		return this._owner_.model();
-	};
-	
-	// commit is always called when a node is rendered as part of an outer tree
-	// this is where we decide whether to cascade the render through to inner
-	// parts of this.
-	
-	// improvised alternative to React shouldComponentUpdate
-	// you can do this however you want. In Imba there is really no reason
-	// not to render (since it is so fast) - but to make it behave like
-	// the react version we only render the content if we know it has changed
-	
-	tag.prototype.commit = function (){
-		if (API.FULLRENDER) { return this.render() };
-		
-		if (this._hash != this.hash(this.data())) {
-			this._hash = this.hash(this.data());
-			this.render();
-		};
-		
-		return this;
-	};
-	
-	
-	tag.prototype.hash = function (o){
-		return "" + o.title + o.completed + this._editing;
-	};
-	
-	tag.prototype.render = function (){
-		var self = this, $ = self.$;
-		var todo = this._data;
-		
-		return this.flag('completed',(todo.completed)).setChildren([
-			($.A=$.A || _T.$('div',this).flag('view')).setContent([
-				($.B=$.B || _T.$('label',self).on('dblclick','edit',0)).setText("" + (todo.title)).end(),
-				(self._toggle || _T.$('input',self).ref_('toggle',self).setType('checkbox').on('change','toggle',0)).setChecked((todo.completed)).end(),
-				($.C=$.C || _T.$('button',self).flag('destroy').on('tap','drop',0)).end()
-			],2).end(),
-			(self._input || _T.$('input',self).ref_('input',self).flag('edit').setType('text')).end()
-		],2).synced();
-	};
-	
-	tag.prototype.edit = function (){
-		var self = this;
-		self._editing = true;
-		self.flag('editing');
-		self._input.setValue(self.data().title);
-		setTimeout(function() { return self._input.focus(); },10);
-		return self.render(); // only need to render this
-	};
-	
-	tag.prototype.drop = function (){
-		return this.model().destroy(this.data());
-	};
-	
-	tag.prototype.toggle = function (e){
-		this.data().completed = this._toggle.checked();
-		return this.model().inform();
-	};
-	
-	tag.prototype.submit = function (){
-		this._editing = false;
-		this.unflag('editing');
-		var title = this._input.value().trim();
-		return title ? this.model().rename(this.data(),title) : this.model().destroy(this.data());
-	};
-	
-	tag.prototype.onfocusout = function (e){
-		if (this._editing) { return this.submit() };
-	};
-	
-	tag.prototype.cancel = function (){
-		this._editing = false;
-		this.unflag('editing');
-		this._input.blur();
-		return this.render();
-	};
-	
-	// onkeydown from inner element cascade through
-	tag.prototype.onkeydown = function (e){
-		e.halt();
-		if (e.which() == ENTER_KEY) this.submit();
-		if (e.which() == ESCAPE_KEY) { return this.cancel() };
-	};
-})
-exports.Todo = Todo;
-
 
 
 /***/ })

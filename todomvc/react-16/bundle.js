@@ -136,6 +136,8 @@ var TodoFooter = __webpack_require__(4).TodoFooter;
 
 var ENTER_KEY = 13;
 
+var store = API.store;
+
 class TodoApp extends React.Component {
 
 	constructor(props){
@@ -208,7 +210,6 @@ class TodoApp extends React.Component {
 	}
 
 	render() {
-		API.RENDERCOUNT++; // Mark rendercount
 		var footer;
 		var main;
 		var todos = this.props.model.todos;
@@ -274,7 +275,7 @@ class TodoApp extends React.Component {
 		return (
 			React.createElement("div", null, 
 				React.createElement("header", {className: "header"}, 
-					React.createElement("h1", null, "todos " + API.RENDERCOUNT),
+					React.createElement("h1", null, "todos " + store.counter),
 					React.createElement("input", {
 						ref: (input => this.newField = input ),
 						className: "new-todo", 

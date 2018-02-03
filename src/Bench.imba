@@ -24,7 +24,7 @@ export class Bench
 		
 		var fn = do
 			var api = this:app.api
-			o:step.call(this,api,api.RENDERCOUNT)
+			o:step.call(this,api,api:store:counter)
 			return
 		
 		# let fn = o:step
@@ -32,8 +32,9 @@ export class Bench
 		# @fn = do fn(@i++,this:app
 		window.S = @suite = Benchmark.Suite.new(@name)
 		# add each benchmark
-		apps.map do |app| @suite.add(app.name, fn, app: app)
-
+		apps.map do |app,i|
+			@suite.add(app.name, fn, app: app)
+			self[app.name] = @suite[i]
 		console.log @suite
 		bind
 		self
@@ -80,9 +81,15 @@ export class Bench
 			return
 	
 		@suite.on 'complete' do
+			var fastest = this.filter('fastest').pluck('name')
 			console.log('Fastest is ' + this.filter('fastest').pluck('name'))
 			document:body:classList.remove('running')
 			# present
+			for app in apps
+				let bench = self[app.name]
+				bench:fastest = self[fastest]
+				app.result = bench
+				console.log "setting result",bench
 			Imba.commit
 			return
 

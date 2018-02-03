@@ -5,36 +5,8 @@
 		<title>Imba • TodoMVC</title>
 		<link rel="stylesheet" href="../../resources/shared/app.css">
 		<script src="../../resources/shared/api.js"></script>
-		<script>
-			window.BT = function(){
-				var i = 0;
-				var el = window.EL = document.createElement('div');
-				el.textContent = "";
-				console.time('a');
-				while(++i < 100000){
-					el.textContent = "test " + Math.random();
-				}
-				console.timeEnd('a');
-
-				console.time('b');
-				var tel = el.firstChild;
-				while(--i > 0){
-					el.firstChild.textContent = "test " + Math.random();
-				}
-				console.timeEnd('b');
-
-				console.time('c');
-				var tel = el.firstChild;
-				while(++i < 100000){
-					el.firstChild.nodeValue = "test " + Math.random();
-				}
-				console.timeEnd('c');
-
-			}
-		</script>
 	</head>
 	<body>
-		<section class="todoapp"></section>
 		<script src="app.js"></script>
 	</body>
 </html>
