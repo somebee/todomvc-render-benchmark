@@ -60,11 +60,64 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 0);
+/******/ 	return __webpack_require__(__webpack_require__.s = 1);
 /******/ })
 /************************************************************************/
 /******/ ([
 /* 0 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Utils", function() { return Utils; });
+
+var Utils = {
+	uuid: function () {
+		/*jshint bitwise:false */
+		var i, random;
+		var uuid = '';
+
+		for (i = 0; i < 32; i++) {
+			random = Math.random() * 16 | 0;
+			if (i === 8 || i === 12 || i === 16 || i === 20) {
+				uuid += '-';
+			}
+			uuid += (i === 12 ? 4 : (i === 16 ? (random & 3 | 8) : random))
+				.toString(16);
+		}
+
+		return uuid;
+	},
+
+	pluralize: function (count, word) {
+		return count === 1 ? word : word + 's';
+	},
+
+	store: function (namespace, data) {
+		if (data) {
+			return localStorage.setItem(namespace, JSON.stringify(data));
+		}
+
+		var store = localStorage.getItem(namespace);
+		return (store && JSON.parse(store)) || [];
+	},
+
+	extend: function () {
+		var newObj = {};
+		for (var i = 0; i < arguments.length; i++) {
+			var obj = arguments[i];
+			for (var key in obj) {
+				if (obj.hasOwnProperty(key)) {
+					newObj[key] = obj[key];
+				}
+			}
+		}
+		return newObj;
+	}
+};
+
+/***/ }),
+/* 1 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /*jshint quotmark:false */
@@ -77,7 +130,7 @@ app.ALL_TODOS = 'all';
 app.ACTIVE_TODOS = 'active';
 app.COMPLETED_TODOS = 'completed';
 
-var TodoModel = __webpack_require__(1).TodoModel;
+var TodoModel = __webpack_require__(2).TodoModel;
 var TodoItem = __webpack_require__(3).TodoItem;
 var TodoFooter = __webpack_require__(4).TodoFooter;
 
@@ -171,10 +224,10 @@ class TodoApp extends React.Component {
 			}
 		}, this);
 
-		var todoItems = shownTodos.map(function (todo) {
+		var todoItems = shownTodos.map(function (todo,index) {
 			return (
 				React.createElement(TodoItem, {
-					key: todo.id, 
+					key: index, 
 					todo: todo, 
 					onToggle: this.toggle.bind(this, todo), 
 					onDestroy: this.destroy.bind(this, todo), 
@@ -254,7 +307,7 @@ app.render = render;
 
 
 /***/ }),
-/* 1 */
+/* 2 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -264,7 +317,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /*jshint trailing:false */
 /*jshint newcap:false */
 
-var Utils = __webpack_require__(2).Utils;
+var Utils = __webpack_require__(0).Utils;
 
 class TodoModel {
 	// Generic "model" object. You can use whatever
@@ -356,59 +409,6 @@ class TodoModel {
 /* harmony export (immutable) */ __webpack_exports__["TodoModel"] = TodoModel;
 
 
-
-/***/ }),
-/* 2 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Utils", function() { return Utils; });
-
-var Utils = {
-	uuid: function () {
-		/*jshint bitwise:false */
-		var i, random;
-		var uuid = '';
-
-		for (i = 0; i < 32; i++) {
-			random = Math.random() * 16 | 0;
-			if (i === 8 || i === 12 || i === 16 || i === 20) {
-				uuid += '-';
-			}
-			uuid += (i === 12 ? 4 : (i === 16 ? (random & 3 | 8) : random))
-				.toString(16);
-		}
-
-		return uuid;
-	},
-
-	pluralize: function (count, word) {
-		return count === 1 ? word : word + 's';
-	},
-
-	store: function (namespace, data) {
-		if (data) {
-			return localStorage.setItem(namespace, JSON.stringify(data));
-		}
-
-		var store = localStorage.getItem(namespace);
-		return (store && JSON.parse(store)) || [];
-	},
-
-	extend: function () {
-		var newObj = {};
-		for (var i = 0; i < arguments.length; i++) {
-			var obj = arguments[i];
-			for (var key in obj) {
-				if (obj.hasOwnProperty(key)) {
-					newObj[key] = obj[key];
-				}
-			}
-		}
-		return newObj;
-	}
-};
 
 /***/ }),
 /* 3 */
@@ -541,7 +541,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /*jshint newcap:false */
 /*global React */
 
-var Utils = __webpack_require__(2).Utils;
+var Utils = __webpack_require__(0).Utils;
 
 class TodoFooter extends React.Component {
 

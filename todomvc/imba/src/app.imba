@@ -42,7 +42,7 @@ tag App
 
 	def list items
 		for todo,i in items
-			<Todo[todo]@{todo:id}>
+			<Todo[todo]>
 
 	def render
 		API.RENDERCOUNT++
@@ -69,7 +69,8 @@ tag App
 			if all:length > 0
 				<section.main>
 					<input@toggler.toggle-all type='checkbox' :change='toggleAll'>
-					<ul.todo-list> list(items)
+					<ul.todo-list> for todo in items
+						<Todo[todo]>
 
 			if all:length > 0
 				<footer.footer>

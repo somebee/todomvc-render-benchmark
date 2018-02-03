@@ -19,6 +19,10 @@
   "engines": {
     "node": ">=0.8.0"
   },
+  "scripts": {
+    "build": "imbapack src/index.imba client.js",
+    "watch": "imbapack --watch src/index.imba client.js"
+  },
   "files": [],
   "directories": {},
   "main": "./index.js",
@@ -35,6 +39,7 @@
     "gulp": "^3.9.0",
     "gulp-less": "^3.0.3",
     "less": "^2.5.1",
-    "less-plugin-autoprefix": "^1.4.2"
+    "less-plugin-autoprefix": "^1.4.2",
+    "imba": "1.3.0-beta.1"
   }
 }

@@ -1,0 +1,41 @@
+.apps {
+	margin: 40px;
+}
+
+.app {
+	width:50%;
+	padding: 10px;
+	position: relative;
+	display: inline-block;
+}
+
+.app .header {
+  position: relative;
+  height: 30px;
+  color: #202837;
+  background: #e8e8e8;
+  line-height: 30px;
+  padding: 0px 10px;
+  border-top-left-radius: 3px;
+  border-top-right-radius: 3px;
+  font-size: 12px;
+  font-weight: bold;
+}
+.app iframe {
+  border: 4px solid #e8e8e8;
+  border-top: none;
+  margin: 0;
+  padding: 0;
+  vertical-align: top;
+  width: 100%;
+  box-sizing: border-box;
+  height: 550px;
+  background: #e8e8e8;
+}
+.running iframe {
+  border-color: #202837;
+}
+.running .header {
+  background-color: #202837;
+  color: white;
+}

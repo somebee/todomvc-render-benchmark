@@ -407,224 +407,196 @@ Imba.Pointer.prototype.y = function (){
 
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 var Imba = __webpack_require__(1), _T = Imba.TAGS;
+// externs;
 
-var Store = __webpack_require__(14).Store;
-Todos = new Store('imba-todos');
 
-var Todo = __webpack_require__(15).Todo;
+var Bench = __webpack_require__(14).Bench;
+var Framework = __webpack_require__(15).Framework;
 
-var ENTER_KEY = 13;
+var store = {
+	runs: []
+};
 
-var App = _T.defineTag('App', function(tag){
-	
-	tag.prototype.hash = function (){
-		return this._hash;
-	};
-	
-	tag.prototype.model = function (){
-		return this._model;
-	};
-	
-	tag.prototype.build = function (){
-		var self = this;
-		self._model = Todos;
-		self._model.load();
-		self._model.subscribe(function() { return self.render(); });
-		window.addEventListener('hashchange',function() {
-			self._hash = window.location.hash;
-			return self.render();
-		});
-		self.render();
-		return self;
-	};
-	
-	tag.prototype.onkeydown = function (e){
-		var value, v_;
-		if (e.which() != ENTER_KEY) { return };
+var apps = [
+	{name: 'imba@1.3.0',path: "imba-1.3.0/index.html"},
+	{name: 'imba@1.0.0',path: "imba-1.0.0/index.html"},
+	{name: 'react@16(production)',path: "react-16/index.html"},
+	{name: 'react@16(development)',path: "react-16/index.dev.html"}
+].map(function(options) { return new Framework(options); });
+
+var tests = {};
+
+
+
+tests.main = {
+	label: 'Main',
+	title: 'remove,add,rename,toggle',
+	step: function(app,i) {
+		var count = app._todoCount;
+		var idx = i % count;
+		var action = i % 5;
+		var cycle = Math.floor(i / 5);
 		
-		if (value = e.target().value().trim()) {
-			this.model().addTodo(value);
-			return (e.target().setValue(v_ = ""),v_);
+		switch (action) {
+			case 0: { // remove remove first item
+				app.removeTodoAtIndex(0);
+				break;
+			}
+			case 1: { // insert again
+				// append an item
+				app.addTodo(("Added " + cycle));
+				// app.insertTodoAtIndex(this:todo,cycle % count)
+				break;
+			}
+			case 2: { // rename todo
+				app.renameTodoAtIndex(cycle % count,("Todo - " + i));
+				break;
+			}
+			case 3: { // toggle todo
+				app.toggleTodoAtIndex(cycle % count);
+				break;
+			}
+			case 4: { // no changes to data
+				true;
+				break;
+			}
 		};
+		
+		app.render(true);
+		return;
+	}
+};
+
+
+
+function Chart(id){
+	this._series = apps.map(function(app) { return {type: 'bar',borderWidth: 0,name: app.name(),data: []}; });
+	
+	this._categories = apps.map(function(app) { return app.name(); });
+	
+	var k = function(val) {
+		return Math.round(val);
+		return Math.round(val / 1000) + 'k';
 	};
 	
-	
-	tag.prototype.toggleAll = function (e){
-		return this.model().toggleAll(e.target().checked());
+	var options = {
+		type: 'bar',
+		animation: false,
+		chart: {
+			type: 'bar',
+			renderTo: document.getElementById(id),
+			aanimation: false
+		},
+		loading: {showDuration: 0},
+		xAxis: {id: 'cats',categories: this._categories,tickColor: 'transparent',labels: {enabled: true}},
+		yAxis: {min: 0,title: {text: 'ops/sec'}},
+		tooltip: {
+			pointFormatter: function(v) { return ("<b>" + k(this.y) + "/s</b><br>"); } //  (<b>{(this:y / base).toFixed(2)}x</b>)
+		},
+		plotOptions: {bar: {dataLabels: {enabled: true,formatter: function(v) { return ("<b>" + k(this.y) + "/s</b>"); }}}},
+		credits: {enabled: false},
+		series: []
 	};
 	
-	// remove all completed todos
-	tag.prototype.clearCompleted = function (){
-		this._toggler.setChecked(false);
-		return this.model().clearCompleted();
-	};
-	
-	tag.prototype.list = function (items){
+	// @categories = []
+	this._suites = [];
+	this._chart = window.C = new Highcharts.Chart(options);
+};
+
+Chart.prototype.add = function (suite){
+	let nr = this._suites.push(suite);
+	if (true) {
 		let res = [];
-		for (let i = 0, ary = iter$(items), len = ary.length; i < len; i++) {
-			res.push(Todo.build(this).setData(ary[i]).end());
+		for (let i = 0, items = iter$(suite.suite()), len = items.length; i < len; i++) {
+			res.push(items[i].hz);
 		};
-		return res;
+		var points = res;
+		var series = {type: 'bar',borderWidth: 0,name: suite.name(),data: points};
+		return this._chart.addSeries(series);
 	};
+};
+
+
+var chart;
+var run = function(bench,times) {
+	console.log("run test!!");
+	var count = parseInt(Imba.getTagSingleton('itemcount').value());
+	bench.count = count;
+	bench.title = ("" + count + " todos");
+	store.runs.push(store.run = new Bench(bench,apps));
+	store.run.suite().on('complete',function() {
+		console.log("completede benchmark!");
+		chart || (chart = new Chart('chart'));
+		return chart.add(store.run);
+	});
 	
-	tag.prototype.render = function (){
-		var self = this, $ = self.$;
-		API.RENDERCOUNT++;
-		
-		var all = Todos._items;
-		var items = all;
-		var done = [];
-		var active = [];
-		
-		for (let i = 0, ary = iter$(all), len = ary.length, todo; i < len; i++) {
-			todo = ary[i];
-			todo.completed ? done.push(todo) : active.push(todo);
-		};
-		
-		if (this._hash == '#/completed') {
-			items = done;
-		} else if (this._hash == '#/active') {
-			items = active;
-		};
-		
-		return this.setChildren([
-			($.A=$.A || _T.$('header',this).flag('header')).setContent([
-				($.B=$.B || _T.$('h1',self)).setText("todos " + (API.RENDERCOUNT)).end(),
-				($.C=$.C || _T.$('input',self).flag('new-todo').setType('text').setPlaceholder('What needs to be done?').setAutofocus(true)).end()
-			],2).end(),
-			
-			(all.length > 0) ? (
-				($.D=$.D || _T.$('section',self).flag('main')).setContent([
-					(self._toggler || _T.$('input',self).ref_('toggler',self).flag('toggle-all').setType('checkbox').on('change','toggleAll',0)).end(),
-					($.E=$.E || _T.$('ul',self).flag('todo-list')).setContent((function() {
-						var $1 = ($.F = $.F || []);
-						for (let i = 0, ary = iter$(items), len = $1.taglen = ary.length; i < len; i++) {
-							($1[i]=$1[i] || Todo.build(self)).setData(ary[i]).end();
-						};return $1;
-					})(),4).end()
-				],2).end()
-			) : void(0),
-			
-			(all.length > 0) ? (
-				($.G=$.G || _T.$('footer',self).flag('footer')).setContent([
-					($.H=$.H || _T.$('span',self).flag('todo-count')).setContent([
-						($.I=$.I || _T.$('strong',self)).setText("" + (active.length) + " ").end(),
-						(active.length == 1) ? 'item left' : 'items left'
-					],1).end(),
-					($.J=$.J || _T.$('ul',self).flag('filters')).setContent([
-						($.K=$.K || _T.$('li',self)).setContent(($.L=$.L || _T.$('a',self).setHref('#/').setText('All')).flag('selected',(items == all)).end(),2).end(),
-						($.M=$.M || _T.$('li',self)).setContent(($.N=$.N || _T.$('a',self).setHref('#/active').setText('Active')).flag('selected',(items == active)).end(),2).end(),
-						($.O=$.O || _T.$('li',self)).setContent(($.P=$.P || _T.$('a',self).setHref('#/completed').setText('Completed')).flag('selected',(items == done)).end(),2).end()
-					],2).end(),
-					(done.length > 0) ? (
-						($.Q=$.Q || _T.$('button',self).flag('clear-completed').on('tap','clearCompleted',0).setText('Clear completed')).end()
-					) : void(0)
-				],1).end()
-			) : void(0)
-		],1).synced();
-	};
-});
-
-
-
-// create an instance of the app (with id app)
-var app = App.build(this).setId('app').end();
-
-API.addTodo = function (title){
-	return Todos.addTodo(title);
-};
-
-API.renameTodoAtIndex = function (index,title){
-	var todo = Todos._items[index];
-	return todo.title = title;
-};
-
-API.clearAllTodos = function (){
-	return Todos.clearAll();
-};
-
-API.render = function (){
-	app.render();
-	return API.RENDERCOUNT;
-};
-
-API.getTodoAtIndex = function (index){
-	return Todos._items[index];
-};
-
-API.removeTodoAtIndex = function (index){
-	var todo = API.getTodoAtIndex(index);
-	Todos._items.splice(index,1);
-	return todo;
-};
-
-API.insertTodoAtIndex = function (todo,index){
-	var len = Todos._items.length;
-	var from = Todos._items.indexOf(todo);
-	if (index >= len) {
-		Todos._items.push(todo);
+	if ((typeof times=='number'||times instanceof Number)) {
+		return store.run.warmup(times);
 	} else {
-		Todos._items.splice(index,0,todo);
+		return store.run.run();
 	};
-	return todo;
-};
-
-API.toggleTodoAtIndex = function (index,autorender){
-	var todo = Todos._items[index];
-	todo.completed = !todo.completed;
-	if (autorender) { return API.render(true) };
-};
-
-var step = function(i) {
-	var api = API;
-	var len = api._todoCount;
-	var idx = Math.round(Math.random() * (len - 1));
-	
-	// moving a random task
-	idx = api.RENDERCOUNT % len;
-	idx = Math.min(0,len - 2);
-	var todo = api.removeTodoAtIndex(idx);
-	api.insertTodoAtIndex(todo,1000);
-	
-	api.render(true);
-	api.toggleTodoAtIndex((idx) % len);
-	api.render(true);
-	api.renameTodoAtIndex((idx + 1) % len,("Todo - " + (api.RENDERCOUNT)));
-	return api.render(true);
-};
-
-API.bench = function (times,fn){
-	if(fn==undefined && typeof times == 'function') fn = times,times = 100000;
-	if(times==undefined) times = 100000;
-	let count = 10;
-	
-	API.AUTORENDER = false;
-	// api.clearAllTodos
-	for (let len = count, i = 1, rd = len - i; (rd > 0) ? (i <= len) : (i >= len); (rd > 0) ? (i++) : (i--)) {
-		API.addTodo(("Todo " + i));
-	};
-	API._todoCount = count;
-	API.FULLRENDER = true;
-	var i = 0;
-	var start = new Date();
-	while (i++ < times){
-		step(i);
-	};
-	
-	var elapsed = new Date() - start;
-	API.render(true);
-	console.log("took",elapsed);
-	return this;
 };
 
 
-// append it to the dom
-document.querySelector('.todoapp').appendChild(app.dom());
-// $$(.todoapp).append app
+Imba.mount(_T.$('div',this).setTemplate(function() {
+	var $ = this.$, self = this;
+	return Imba.static([
+		($.a=$.a || _T.$('header',this)).setContent([
+			($.b=$.b || _T.$('input',this).setId('itemcount').setType("number").setValue("6")).end(),
+			(function() {
+				var _$ = ($.c = $.c || []), _$1 = ($.d = $.d || []);
+				let res = [];
+				for (let desc, i = 0, keys = Object.keys(tests), l = keys.length, name; i < l; i++){
+					name = keys[i];desc = tests[name];res.push((_$[i]=_$[i] || _T.$('button',self)).on('tap',[run,desc],0).setContent(name,3).end());
+					res.push((_$1[i]=_$1[i] || _T.$('button',self).setText("warmup")).on('tap',[run,desc,19234],0).end());
+				};
+				return res;
+			})()
+		],1).end(),
+		($.e=$.e || _T.$('section',self).flag('runs')).setContent(
+			($.f=$.f || _T.$('div',self).setId('chart')).end()
+		,2).end(),
+		
+		($.g=$.g || _T.$('section',self).flag('apps')).setContent(
+			(function() {
+				let res = [];
+				for (let i = 0, items = iter$(apps), len = items.length; i < len; i++) {
+					res.push(items[i].node());
+				};
+				return res;
+			})()
+		,3).end()
+	],1);
+}).end());
 
+// var chart = Highcharts.chart('chart',{
+// 	type: 'bar'
+// 	# title: {text: option('title'), style: {fontSize: "12px"}}
+// 	loading: {showDuration: 0}
+// 
+// 	xAxis:
+// 		categories: [option('title')]
+// 		tickColor: 'transparent'
+// 		labels: { enabled: false }
+// 
+// 	yAxis: {min: 0, title: { text: 'ops/sec'}}
+// 
+// 	tooltip:
+// 		pointFormatter: do |v| "<b>" + this:y.toFixed(2) + "</b> ops/sec (<b>{(this:y / base).toFixed(2)}x</b>)<br>"
+// 
+// 	legend: {verticalAlign: 'top', y: 20}
+// 	plotOptions: {bar: {dataLabels: { enabled: true, formatter: (|v| "<b>{(this:y / base).toFixed(2)}x</b>") }}}
+// 	credits: { enabled: false }
+// 	series: []
+// })
 
-
-
+// Manager.suites.map do |suite|
+// 	var btn = document.createElement('button')
+// 	btn:textContent = suite.option('label')
+// 	btn:onclick = do
+// 		btn:disabled = "disabled"
+// 		suite.run
+// 	window:controls.appendChild(btn)#
 
 /***/ }),
 /* 4 */
@@ -4134,101 +4106,188 @@ if (apple) {
 
 /***/ }),
 /* 14 */
-/***/ (function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
 
-function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
+var Imba = __webpack_require__(1), _T = Imba.TAGS;
+
 // externs;
 
-function Store(key){
-	this._key = key;
-	this._items = [];
-	this._listeners = [];
+function Bench(o,apps){
+	var self = this;
+	self._options = o;
+	self._name = o.title;
+	
+	self._step = -1;
+	self._current = null;
+	self._benchmarks = [];
+	self._apps = apps;
+	self._count = self._options.count || 6;
+	
+	var fn = function() {
+		var api = this.app.api();
+		o.step.call(this,api,api.RENDERCOUNT);
+		return;
+	};
+	
+	// let fn = o:step
+	// @i = 0
+	// @fn = do fn(@i++,this:app
+	window.S = self._suite = new Benchmark.Suite(self._name);
+	// add each benchmark
+	apps.map(function(app) { return self._suite.add(app.name(),fn,{app: app}); });
+	
+	console.log(self._suite);
+	self.bind();
+	self;
 };
 
-exports.Store = Store; // export class 
-var id = 0;
+exports.Bench = Bench; // export class 
+Bench.prototype.name = function(v){ return this._name; }
+Bench.prototype.setName = function(v){ this._name = v; return this; };
+Bench.prototype.apps = function(v){ return this._apps; }
+Bench.prototype.setApps = function(v){ this._apps = v; return this; };
+Bench.prototype.state = function(v){ return this._state; }
+Bench.prototype.setState = function(v){ this._state = v; return this; };
+Bench.prototype.suite = function(v){ return this._suite; }
+Bench.prototype.setSuite = function(v){ this._suite = v; return this; };
+Bench.prototype.results = function(v){ return this._results; }
+Bench.prototype.setResults = function(v){ this._results = v; return this; };
 
-Store.prototype.items = function(v){ return this._items; }
-Store.prototype.setItems = function(v){ this._items = v; return this; };
-
-Store.prototype.subscribe = function (fn){
-	return this._listeners.push(fn);
+Bench.prototype.option = function (key){
+	return this._options[key];
 };
 
-Store.prototype.inform = function (){
-	if (API.AUTORENDER) {
-		for (let i = 0, items = iter$(this._listeners), len = items.length; i < len; i++) {
-			items[i](this);
+Bench.prototype.step = function (idx){
+	this._step = idx;
+	if (this._current) {
+		this._current.app.deactivate();
+	};
+	
+	if (this._current = this._suite[idx]) {
+		this._current.app.activate();
+	};
+	return this;
+};
+
+Bench.prototype.currentApp = function (){
+	return this._apps[this._step];
+};
+
+Bench.prototype.bind = function (){
+	var self = this;
+	self._suite.on('start',function(e) {
+		console.log("start");
+		document.body.classList.add('running');
+		
+		self.apps().map(function(app) {
+			// app.api.FULLRENDER = yes
+			// app.api.RENDERCOUNT = -1
+			// app.api.render(yes)
+			console.log("reset!");
+			return app.reset(self._count);
+		});
+		
+		self.step(0);
+		Imba.commit();
+		return;
+	});
+	
+	self._suite.on('reset',function(e) {
+		console.log('suite onReset');
+		Imba.commit();
+		return;
+	});
+	
+	self._suite.on('cycle',function(event) {
+		console.log("cycle!");
+		self.currentApp().setStatus(String(event.target));
+		self.currentApp().api().AUTORENDER = true;
+		self.step(self._step + 1);
+		Imba.commit();
+		return;
+	});
+	
+	return self._suite.on('complete',function() {
+		console.log('Fastest is ' + this.filter('fastest').pluck('name'));
+		document.body.classList.remove('running');
+		// present
+		Imba.commit();
+		return;
+	});
+};
+
+Bench.prototype.run = function (){
+	var self = this;
+	return Promise.all(self.apps().map(function(app) { return app.build(); })).then(function() {
+		console.log("ready to run!");
+		return self._suite.run({async: true,queued: false});
+	});
+};
+
+Bench.prototype.reset = function (){
+	var self = this;
+	self.apps().map(function(app) { return app.reset(self._count); });
+	return self;
+};
+
+Bench.prototype.warmup = function (times){
+	var self = this;
+	if(times === undefined) times = 1000;
+	self.reset();
+	
+	var fn = self._options.step;
+	var nr = 0;
+	
+	var step = function() {
+		var app = self.apps()[nr++];
+		if (!app) { return };
+		var i = 0;
+		var bm = {app: app};
+		var start = new Date();
+		console.log("render times",app.api().RENDERCOUNT);
+		while (i++ < times){
+			fn.call(bm,app.api(),app.api().RENDERCOUNT);
 		};
+		var elapsed = new Date() - start;
+		app.api().AUTORENDER = true;
+		app.setStatus(("" + (app.title()) + " - " + (self._name) + " - " + times + " iterations - " + elapsed + "ms"));
+		return setTimeout(step,100);
 	};
+	setTimeout(step,100);
+	return self;
+};
+
+Bench.prototype.present = function (){
+	this._results = _T.$('div',this).flag('chart').end();
+	// find slowest
+	var sorted = this._benchmarks.slice().sort(function(a,b) { return a.hz - b.hz; });
+	var base = sorted[0].hz;
+	var series = this._benchmarks.map(function(b) { return {type: 'bar',borderWidth: 0,name: b.App.title(),data: [b.hz]}; });
+	this._series = series.reverse();
 	
-	if (API.AUTOPERSIST) {
-		this.store();
-	};
-	
-	return this;
+	return this._chart = new Highcharts.Chart({
+		chart: {type: 'bar',renderTo: this._results.dom()},
+		title: {text: this.option('title'),style: {fontSize: "12px"}},
+		loading: {showDuration: 0},
+		
+		xAxis: {
+			categories: [this.option('title')],
+			tickColor: 'transparent',
+			labels: {enabled: false}
+		},
+		
+		yAxis: {min: 0,title: {text: 'ops/sec'}},
+		
+		tooltip: {
+			pointFormatter: function(v) { return "<b>" + this.y.toFixed(2) + ("</b> ops/sec (<b>" + (this.y / base).toFixed(2) + "x</b>)<br>"); }
+		},
+		
+		legend: {verticalAlign: 'top',y: 20},
+		plotOptions: {bar: {dataLabels: {enabled: true,formatter: function(v) { return ("<b>" + (this.y / base).toFixed(2) + "x</b>"); }}}},
+		credits: {enabled: false},
+		series: series
+	});
 };
-
-Store.prototype.addTodo = function (title){
-	this.items().push({id: id++,title: title,completed: false});
-	return this.inform();
-};
-
-Store.prototype.toggleAll = function (state){
-	for (let i = 0, items = iter$(this.items()), len = items.length; i < len; i++) {
-		items[i].completed = state;
-	};
-	return this.inform();
-};
-
-Store.prototype.toggle = function (item){
-	item.completed = !item.completed;
-	return this.inform();
-};
-
-Store.prototype.destroy = function (item){
-	this.items().splice(this.items().indexOf(item),1);
-	return this.inform();
-};
-
-Store.prototype.rename = function (item,title){
-	item.title = title;
-	return this.inform();
-};
-
-Store.prototype.save = function (item,title){
-	item.title = title;
-	return this.inform();
-};
-
-Store.prototype.clearCompleted = function (){
-	this.setItems(this.items().filter(function(item) { return !item.completed; }));
-	return this.inform();
-};
-
-Store.prototype.clearAll = function (){
-	this.setItems([]);
-	return this.inform();
-};
-
-Store.prototype.load = function (){
-	this.setItems(JSON.parse(localStorage.getItem(this._key) || '[]'));
-	for (let i = 0, items = iter$(this.items()), len = items.length; i < len; i++) {
-		items[i].id = id++;
-	}; // setting unique id
-	return this.inform();
-};
-
-// persist todos to localstorage
-Store.prototype.store = function (){
-	var json = JSON.stringify(this.items());
-	if (json != this._json) { localStorage.setItem(this._key,this._json = json) };
-	return this;
-};
-
-
-
-
 
 
 /***/ }),
@@ -4236,103 +4295,108 @@ Store.prototype.store = function (){
 /***/ (function(module, exports, __webpack_require__) {
 
 var Imba = __webpack_require__(1), _T = Imba.TAGS;
-var ESCAPE_KEY = 27;
-var ENTER_KEY = 13;
 
-// this way of caching is not the 'Imba way' - it is merely a very simple way
-// to do something similar to React 'shouldComponentUpdate'. You can implement
-// this however you want - you merely try to figure out whether anything have
-// changed inside tag#commit, and then rerender if it has.
-var Todo = _T.defineTag('Todo', 'li', function(tag){
-	
-	tag.prototype.model = function (){
-		return this._owner_.model();
-	};
-	
-	// commit is always called when a node is rendered as part of an outer tree
-	// this is where we decide whether to cascade the render through to inner
-	// parts of this.
-	
-	// improvised alternative to React shouldComponentUpdate
-	// you can do this however you want. In Imba there is really no reason
-	// not to render (since it is so fast) - but to make it behave like
-	// the react version we only render the content if we know it has changed
-	
-	tag.prototype.commit = function (){
-		if (API.FULLRENDER) { return this.render() };
-		
-		if (this._hash != this.hash(this.data())) {
-			this._hash = this.hash(this.data());
-			this.render();
+
+function Framework(o){
+	if(o === undefined) o = {};
+	this._options = o;
+	this._title = this._name = o.name;
+	this._ready = false;
+	this._timings = {};
+	this._node = _T.$('div',this).flag('app').setContent([
+		(this._header || _T.$('header',this).ref_('header',this)).setContent(this.name(),3).end(),
+		(this._frame || _T.$('iframe',this).ref_('frame',this).css('minHeight','400px')).setSrc(this.url()).end()
+	],2).end();
+	this.build();
+};
+
+exports.Framework = Framework; // export class 
+Framework.prototype.performance = function(v){ return this._performance; }
+Framework.prototype.setPerformance = function(v){ this._performance = v; return this; };
+Framework.prototype.timings = function(v){ return this._timings; }
+Framework.prototype.setTimings = function(v){ this._timings = v; return this; };
+
+Framework.prototype.node = function (){
+	return this._node;
+};
+Framework.prototype.name = function (){
+	return this._name;
+};
+Framework.prototype.title = function (){
+	return this._title;
+};
+Framework.prototype.color = function (){
+	return this._options.color || 'red';
+};
+Framework.prototype.url = function (){
+	return this._options.url || ("todomvc/" + (this._options.path));
+};
+Framework.prototype.doc = function (){
+	return this._frame.dom().contentDocument;
+};
+Framework.prototype.win = function (){
+	return this._win || (this._win = this._frame.dom().contentWindow);
+};
+Framework.prototype.api = function (){
+	return this._api || (this._api = this._frame.dom().contentWindow.API);
+};
+
+Framework.prototype.build = function (){
+	var self = this;
+	return self._build || (self._build = new Promise(function(resolve) {
+		var wait = function() {
+			if (self.doc() && self.doc().querySelector('#header h1,.header h1') && self.api().RENDERCOUNT > 0) {
+				let p = self._performance = self.win().performance;
+				self.api().ready();
+				self.reset(6);
+				self.api().AUTORENDER = true;
+				setTimeout(function() {
+					var v_;
+					self._timings.ready = p.timing.domComplete - p.timing.domLoading;
+					return (self.setStatus(v_ = ("" + self.name() + " - domComplete " + (self._timings.ready) + "ms")),v_);
+				},10);
+				return resolve(self);
+			};
+			return setTimeout(wait,10);
 		};
-		
-		return this;
-	};
-	
-	
-	tag.prototype.hash = function (o){
-		return "" + o.title + o.completed + this._editing;
-	};
-	
-	tag.prototype.render = function (){
-		var self = this, $ = self.$;
-		var todo = this._data;
-		
-		return this.flag('completed',(todo.completed)).setChildren([
-			($.A=$.A || _T.$('div',this).flag('view')).setContent([
-				($.B=$.B || _T.$('label',self).on('dblclick','edit',0)).setText("" + (todo.title)).end(),
-				(self._toggle || _T.$('input',self).ref_('toggle',self).setType('checkbox').on('change','toggle',0)).setChecked((todo.completed)).end(),
-				($.C=$.C || _T.$('button',self).flag('destroy').on('tap','drop',0)).end()
-			],2).end(),
-			(self._input || _T.$('input',self).ref_('input',self).flag('edit').setType('text')).end()
-		],2).synced();
-	};
-	
-	tag.prototype.edit = function (){
-		var self = this;
-		self._editing = true;
-		self.flag('editing');
-		self._input.setValue(self.data().title);
-		setTimeout(function() { return self._input.focus(); },10);
-		return self.render(); // only need to render this
-	};
-	
-	tag.prototype.drop = function (){
-		return this.model().destroy(this.data());
-	};
-	
-	tag.prototype.toggle = function (e){
-		this.data().completed = this._toggle.checked();
-		return this.model().inform();
-	};
-	
-	tag.prototype.submit = function (){
-		this._editing = false;
-		this.unflag('editing');
-		var title = this._input.value().trim();
-		return title ? this.model().rename(this.data(),title) : this.model().destroy(this.data());
-	};
-	
-	tag.prototype.onfocusout = function (e){
-		if (this._editing) { return this.submit() };
-	};
-	
-	tag.prototype.cancel = function (){
-		this._editing = false;
-		this.unflag('editing');
-		this._input.blur();
-		return this.render();
-	};
-	
-	// onkeydown from inner element cascade through
-	tag.prototype.onkeydown = function (e){
-		e.halt();
-		if (e.which() == ENTER_KEY) this.submit();
-		if (e.which() == ESCAPE_KEY) { return this.cancel() };
-	};
-})
-exports.Todo = Todo;
+		return wait();
+	}));
+};
 
+Framework.prototype.prepare = function (){
+	// should be done by benchmarks
+	return this.reset(6);
+};
+
+Framework.prototype.reset = function (count){
+	if(count === undefined) count = 10;
+	this.api().AUTORENDER = false;
+	this.api().RENDERCOUNT = 0;
+	this.api().FULLRENDER = true;
+	// reset / remove all todos
+	this.api().clearAllTodos();
+	for (let len = count, i = 1, rd = len - i; (rd > 0) ? (i <= len) : (i >= len); (rd > 0) ? (i++) : (i--)) {
+		this.api().addTodo("Todo " + i);
+	};
+	this.api()._todoCount = count;
+	this.api().render(true);
+	this.api().RENDERCOUNT = 0;
+	return this;
+};
+
+Framework.prototype.deactivate = function (){
+	return this.node().unflag('running');
+};
+
+Framework.prototype.activate = function (){
+	return this.node().flag('running');
+};
+
+Framework.prototype.setStatus = function (status){
+	this._header.setText(status);
+	this;
+	return this;
+};
 
 
 /***/ })

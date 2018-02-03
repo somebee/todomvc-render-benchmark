@@ -102,10 +102,10 @@ class TodoApp extends React.Component {
 			}
 		}, this);
 
-		var todoItems = shownTodos.map(function (todo) {
+		var todoItems = shownTodos.map(function (todo,index) {
 			return (
 				React.createElement(TodoItem, {
-					key: todo.id, 
+					key: index, 
 					todo: todo, 
 					onToggle: this.toggle.bind(this, todo), 
 					onDestroy: this.destroy.bind(this, todo), 

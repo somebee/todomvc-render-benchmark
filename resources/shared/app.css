@@ -26,13 +26,14 @@ body {
 	line-height: 1.4em;
 	background: #f5f5f5;
 	color: #4d4d4d;
-	min-width: 230px;
-	max-width: 550px;
+	-min-width: 230px;
+	-max-width: 550px;
 	margin: 0 auto;
 	-webkit-font-smoothing: antialiased;
 	-moz-font-smoothing: antialiased;
 	font-smoothing: antialiased;
 	font-weight: 300;
+	background: white;
 }
 
 button,
@@ -47,9 +48,8 @@ input[type="checkbox"] {
 .todoapp {
 	background: #fff;
 	margin: 130px 0 40px 0;
+	margin: 0;
 	position: relative;
-	box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2),
-	            0 25px 50px 0 rgba(0, 0, 0, 0.1);
 }
 
 .todoapp input::-webkit-input-placeholder {
@@ -70,28 +70,15 @@ input[type="checkbox"] {
 	color: #e6e6e6;
 }
 
-.todoapp h1 {
-	position: absolute;
-	top: -155px;
-	width: 100%;
-	font-size: 100px;
-	font-weight: 100;
-	text-align: center;
-	color: rgba(175, 47, 47, 0.15);
-	-webkit-text-rendering: optimizeLegibility;
-	-moz-text-rendering: optimizeLegibility;
-	text-rendering: optimizeLegibility;
-}
-
 .new-todo,
 .edit {
 	position: relative;
 	margin: 0;
 	width: 100%;
-	font-size: 24px;
+	font-size: 18px;
 	font-family: inherit;
 	font-weight: inherit;
-	line-height: 1.4em;
+	line-height: 1.2em;
 	border: 0;
 	outline: none;
 	color: inherit;
@@ -150,7 +137,7 @@ label[for='toggle-all'] {
 
 .todo-list li {
 	position: relative;
-	font-size: 24px;
+	font-size: 18px;
 	border-bottom: 1px solid #ededed;
 }
 
@@ -203,7 +190,7 @@ label[for='toggle-all'] {
 	margin-left: 45px;
 	display: block;
 	line-height: 1.2;
-	transition: color 0.4s;
+	/*transition: color 0.4s;*/
 }
 
 .todo-list li.completed label {
@@ -223,7 +210,7 @@ label[for='toggle-all'] {
 	font-size: 30px;
 	color: #cc9a9a;
 	margin-bottom: 11px;
-	transition: color 0.2s ease-out;
+	/*transition: color 0.2s ease-out;*/
 }
 
 .todo-list li .destroy:hover {
@@ -262,7 +249,7 @@ label[for='toggle-all'] {
 	left: 0;
 	height: 50px;
 	overflow: hidden;
-	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.2),
+	-box-shadow: 0 1px 1px rgba(0, 0, 0, 0.2),
 	            0 8px 0 -3px #f6f6f6,
 	            0 9px 1px -3px rgba(0, 0, 0, 0.2),
 	            0 16px 0 -6px #f6f6f6,
@@ -377,16 +364,18 @@ html .clear-completed:active {
 	}
 }
 
-
+/* Label showing the render-count */
 .todoapp h1 {
 	font-size: 16px;
 	font-weight: bold;
 	color: red;
 	position: absolute;
-	top: -2em;
+	top: 10px;
+	right: 10px;
 	line-height: 2em;
 	margin: 0;
 	padding: 0;
+	display: block;
 
 	transform: translate3d(0px,0px,0px);
 	-moz-transform: translate3d(0px,0px,0px);
@@ -398,7 +387,7 @@ html .clear-completed:active {
 }
 
 .todoapp {
-	margin: 40px 0px;
+	-margin: 40px 0px;
 }
 
 label {
