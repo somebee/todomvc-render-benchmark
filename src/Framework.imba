@@ -27,7 +27,8 @@ export class Framework
 	def build
 		@build ||= Promise.new do |resolve|
 			var wait = do
-				if doc and doc.querySelector('#header h1,.header h1') && api.RENDERCOUNT > 0
+				if doc and api and api.READY
+					# if doc and doc.querySelector('#header h1,.header h1') && api.RENDERCOUNT > 0
 					let p = @performance = win:performance
 					api.ready
 					reset(6)

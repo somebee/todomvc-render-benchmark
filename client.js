@@ -419,10 +419,10 @@ var store = {
 
 var apps = [
 	{name: 'imba@1.3.0',path: "imba-1.3.0/index.html"},
-	// {name: 'imba@1.0.0', path: "imba-1.0.0/index.html"}
-	{name: 'react@16.prod',path: "react-16/index.html"},
-	{name: 'react@16.dev',path: "react-16/index.dev.html"}
-].map(function(options) { return new Framework(options); });
+	{name: 'vue',path: "vue/index.html"},
+	{name: 'react@16.prod',path: "react-16/index.html"}
+// {name: 'react@16.dev', path: "react-16/index.dev.html"}
+].reverse().map(function(options) { return new Framework(options); });
 
 var tests = {};
 
@@ -539,10 +539,13 @@ var run = function(bench,times) {
 };
 
 var step = function(times) {
-	for (let i = 0, items = iter$(apps), len = items.length, app; i < len; i++) {
-		app = items[i];
+	for (let j = 0, items = iter$(apps), len = items.length, app; j < len; j++) {
+		app = items[j];
+		let i = 100;
 		app.api().AUTORENDER = false;
-		tests.main.step(app.api(),app.api().RENDERCOUNT);
+		while (--i > 0){
+			tests.main.step(app.api(),app.api().RENDERCOUNT);
+		};
 		app.api().AUTORENDER = true;
 	};
 	return;
@@ -4367,7 +4370,8 @@ Framework.prototype.build = function (){
 	var self = this;
 	return self._build || (self._build = new Promise(function(resolve) {
 		var wait = function() {
-			if (self.doc() && self.doc().querySelector('#header h1,.header h1') && self.api().RENDERCOUNT > 0) {
+			if (self.doc() && self.api() && self.api().READY) {
+				// if doc and doc.querySelector('#header h1,.header h1') && api.RENDERCOUNT > 0
 				let p = self._performance = self.win().performance;
 				self.api().ready();
 				self.reset(6);

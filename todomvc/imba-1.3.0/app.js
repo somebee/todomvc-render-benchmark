@@ -620,6 +620,7 @@ API.bench = function (times,fn){
 
 // append it to the dom
 document.querySelector('.todoapp').appendChild(app.dom());
+API.READY = true;
 // $$(.todoapp).append app
 
 

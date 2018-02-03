@@ -163,6 +163,7 @@ def API.bench times = 100000, &fn
 
 # append it to the dom
 document.querySelector('.todoapp').appendChild(app.dom)
+API:READY = true
 # $$(.todoapp).append app
 	
 

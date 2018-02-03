@@ -10,10 +10,11 @@ var store = {
 
 var apps = [
 	{name: 'imba@1.3.0', path: "imba-1.3.0/index.html"}
-	# {name: 'imba@1.0.0', path: "imba-1.0.0/index.html"}
+	{name: 'vue', path: "vue/index.html"}
 	{name: 'react@16.prod', path: "react-16/index.html"}
-	{name: 'react@16.dev', path: "react-16/index.dev.html"}
-].map do |options| Framework.new(options)
+	# {name: 'react@16.dev', path: "react-16/index.dev.html"}
+	
+].reverse.map do |options| Framework.new(options)
 
 var tests = {}
 
@@ -107,8 +108,10 @@ var run = do |bench, times|
 		
 var step = do |times|
 	for app in apps
+		let i = 100
 		app.api.AUTORENDER = no
-		tests:main:step(app.api,app.api.RENDERCOUNT)
+		while --i > 0
+			tests:main:step(app.api,app.api.RENDERCOUNT)
 		app.api.AUTORENDER = yes
 	return
 	

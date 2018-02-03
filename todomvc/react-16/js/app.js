@@ -182,3 +182,4 @@ render();
 
 app.model = model;
 app.render = render;
+API.READY = true;
