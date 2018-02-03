@@ -143,6 +143,7 @@ iframe {
   width: 100%;
   box-sizing: border-box;
   height: 550px;
+  background: #e8e8e8;
 }
 #apps > div.running iframe {
   border-color: #202837;

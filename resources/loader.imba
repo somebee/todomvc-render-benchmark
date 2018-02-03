@@ -59,13 +59,7 @@ class Framework
 	def self.build
 		@build ||= Promise.reduce(all) do |curr,next|
 			curr.build.then do 
-				Promise.delay(100).then do next.build
-
-	def name
-		@name
-
-	def title
-		@title
+				Promise.delay(10).then do next.build
 
 	def initialize name, o = {}
 		dict[name] = self
@@ -75,51 +69,44 @@ class Framework
 		@options = o
 		@ready = false
 
-	def color
-		@options:color or 'red'
-		
-	def url
-		@options:url || "todomvc/{@name}/index.html"
+	def name do @name
+	def title do @title
+	def color do @options:color or 'red'
+	def url do @options:url || "todomvc/{@name}/{@options:index or 'index.html'}"
 
 	def node
 		@node ||= div()
 
-	def iframe
-		@iframe ||= document.createElement('iframe')
-
-	def doc
-		@iframe:contentDocument
-
-	def win
-		@win ||= @iframe:contentWindow
-
-	def api
-		@api ||= @iframe:contentWindow.API
+	def iframe do @iframe ||= document.createElement('iframe')
+	def doc do @iframe:contentDocument
+	def win do @win ||= @iframe:contentWindow
+	def api do @api ||= @iframe:contentWindow.API
 
 	def build
 		@build ||= Promise.new do |resolve|
 			iframe:style:minHeight = '400px'
 			iframe:src = url
 			iframe:id = "{@name}_frame"
-			window:apps.appendChild(node)
-			node.appendChild(@header = div('header',title))
-			node.appendChild(iframe)
 
 			var wait = do
 				if doc.querySelector('#header h1,.header h1') && api.RENDERCOUNT > 0
 					api.ready
 					prepare
+
 					return resolve(self)
-				setTimeout(&,10) do wait()
-			wait()
+				console.log "not ready yet"
+				setTimeout(wait,10)
+
+			iframe:onload = wait
+			window:apps.appendChild(node)
+			node.appendChild(@header = div('header',title))
+			node.appendChild(iframe)
 
 	def prepare
-		# win:localStorage.clear
 		reset(6)
 
 	def reset count
 		api.AUTORENDER = no
-		# api.clearAllTodos
 		api.addTodo(("Todo " + i)) for i in [1..count]
 		@todoCount = count
 		api.render(true)
@@ -130,7 +117,7 @@ class Framework
 		node:classList.remove('running')
 
 	def activate
-		node:classList.add('running')		
+		node:classList.add('running')
 
 	def status= status
 		@header:textContent = status
@@ -202,10 +189,7 @@ class Bench
 			return
 
 	def run
-		Framework.build.then do
-			# @benchmarks.map do |b| b:hz = Math.random * 40000
-			# present
-			@suite.run { async: true, queued: false }
+		Framework.build.then do @suite.run { async: true, queued: false }
 
 	def reset
 		Framework.map do |ex|
@@ -237,8 +221,6 @@ class Bench
 		
 
 	def present
-		# create div
-		console.log 'present'
 		var el = div('chart')
 		window:analysis.appendChild(el)
 
@@ -249,42 +231,34 @@ class Bench
 
 		@chart = Highcharts.Chart.new({
 			chart: { type: 'bar', renderTo: el }
-
-			title:
-				text: option('title')
-				style:
-					fontSize: "14px"
-
-			loading:
-				showDuration: 0
+			title: {text: option('title'), style: {fontSize: "14px"}}
+			loading: {showDuration: 0}
 
 			xAxis:
 				categories: [option('title')]
 				tickColor: 'transparent'
 				labels: { enabled: false }
 
-			yAxis:
-				min: 0
-				title: { text: 'ops / sec (higher is better)'}
+			yAxis: {min: 0, title: { text: 'ops / sec (higher is better)'}}
 
 			tooltip:
 				pointFormatter: do |v| "<b>" + this:y.toFixed(2) + "</b> ops/sec (<b>{(this:y / base).toFixed(2)}x</b>)<br>"
-				# shared: true
 
-			legend:
-				verticalAlign: 'top'
-				y: 20
-
+			legend: {verticalAlign: 'top', y: 20}
 			plotOptions: {bar: {dataLabels: { enabled: true, formatter: (|v| "<b>{(this:y / base).toFixed(2)}x</b>") }}}
 			credits: { enabled: false }
 			series: series.reverse
 		})
 
 
-Framework.new('react', title: 'react v0.13.3')
-Framework.new('imba-0.14.3', title: 'imba v0.14.3')
-Framework.new('imba-dev', title: 'imba v0.15.0-alpha.1')
-Framework.new('mithril', title: 'mithril v0.2.0')
+Framework.new('imba-1.3.0', title: 'imba@1.3.0')
+Framework.new('react-16', title: 'react@16 (production.min)')
+Framework.new('react-16', title: 'react@16 (development)', index: "index.dev.html")
+# Framework.new('imba-1.2.1', title: 'imba v1.2.1')
+# Framework.new('imba-1.0.0', title: 'imba v1.0.0')
+# Framework.new('imba-0.14.3', title: 'imba v0.14.3')
+# Framework.new('react-15.5.4', title: 'react v15.5.4')
+
 
 EVERYTHING = Bench.new
 	label: 'Bench Everything'

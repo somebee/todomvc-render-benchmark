@@ -1,0 +1,10 @@
+{
+  "private": true,
+  "dependencies": {
+    "imba": "1.0.0-rc.2"
+  },
+  "scripts": {
+  	"build": "./node_modules/imba/bin/imbapack src/app.imba ./app.js",
+  	"watch": "./node_modules/imba/bin/imbapack src/app.imba ./app.js --watch"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "private": true,
+  "dependencies": {
+    "imba": "1.3.0-beta.1"
+  },
+  "scripts": {
+  	"build": "./node_modules/.bin/imbapack",
+  	"watch": "./node_modules/.bin/imbapack --watch"
+  }
+}
