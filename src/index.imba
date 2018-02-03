@@ -10,9 +10,9 @@ var store = {
 
 var apps = [
 	{name: 'imba@1.3.0', path: "imba-1.3.0/index.html"}
-	{name: 'imba@1.0.0', path: "imba-1.0.0/index.html"}
-	{name: 'react@16(production)', path: "react-16/index.html"}
-	{name: 'react@16(development)', path: "react-16/index.dev.html"}
+	# {name: 'imba@1.0.0', path: "imba-1.0.0/index.html"}
+	{name: 'react@16.prod', path: "react-16/index.html"}
+	{name: 'react@16.dev', path: "react-16/index.dev.html"}
 ].map do |options| Framework.new(options)
 
 var tests = {}
@@ -36,7 +36,7 @@ tests:main =
 				app.addTodo("Added {cycle}")
 				# app.insertTodoAtIndex(this:todo,cycle % count)
 			when 2 # rename todo
-				app.renameTodoAtIndex(cycle % count,"Todo - {i}")
+				app.renameTodoAtIndex((cycle + 2) % count,"Todo - {i}")
 			when 3 # toggle todo
 				app.toggleTodoAtIndex(cycle % count)
 			when 4 # no changes to data
@@ -63,7 +63,8 @@ class Chart
 			chart: {
 				type: 'bar',
 				renderTo: document.getElementById(id),
-				aanimation: false
+				animation: false,
+				title: null
 			}
 			loading: {showDuration: 0}
 			xAxis: {id: 'cats', categories: @categories, tickColor: 'transparent', labels: { enabled: true }}
@@ -103,20 +104,34 @@ var run = do |bench, times|
 		store:run.warmup(times)
 	else
 		store:run.run
+		
+var step = do |times|
+	for app in apps
+		app.api.AUTORENDER = no
+		tests:main:step(app.api,app.api.RENDERCOUNT)
+		app.api.AUTORENDER = yes
+	return
+	
+var reset = do
+	for app in apps
+		app.reset(parseInt(#itemcount.value))
 
 
 Imba.mount <div ->
-	<header>
+	<header#header>
 		<input#itemcount type="number" value="6">
 		for own name, desc of tests
 			<button :tap=[run,desc]> name
 			<button :tap=[run,desc,19234]> "warmup"
-	<section.runs>
-		<div#chart>
-			
+		<button :tap=step> "step"
+		<button :tap=reset> "reset"
 	<section.apps>
 		for app in apps
 			app.node
+	<section.runs>
+		<div#chart>
+			
+	
 
 # var chart = Highcharts.chart('chart',{
 # 	type: 'bar'

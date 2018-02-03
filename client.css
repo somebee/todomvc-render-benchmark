@@ -1,12 +1,25 @@
+#header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 10px;
+  background: black;
+
+}
+
 .apps {
 	margin: 40px;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
 }
 
 .app {
 	width:50%;
 	padding: 10px;
 	position: relative;
-	display: inline-block;
+	display: block;
+  flex: 1 1 auto;
 }
 
 .app .header {

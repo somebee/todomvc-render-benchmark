@@ -419,9 +419,9 @@ var store = {
 
 var apps = [
 	{name: 'imba@1.3.0',path: "imba-1.3.0/index.html"},
-	{name: 'imba@1.0.0',path: "imba-1.0.0/index.html"},
-	{name: 'react@16(production)',path: "react-16/index.html"},
-	{name: 'react@16(development)',path: "react-16/index.dev.html"}
+	// {name: 'imba@1.0.0', path: "imba-1.0.0/index.html"}
+	{name: 'react@16.prod',path: "react-16/index.html"},
+	{name: 'react@16.dev',path: "react-16/index.dev.html"}
 ].map(function(options) { return new Framework(options); });
 
 var tests = {};
@@ -449,7 +449,7 @@ tests.main = {
 				break;
 			}
 			case 2: { // rename todo
-				app.renameTodoAtIndex(cycle % count,("Todo - " + i));
+				app.renameTodoAtIndex((cycle + 2) % count,("Todo - " + i));
 				break;
 			}
 			case 3: { // toggle todo
@@ -485,7 +485,8 @@ function Chart(id){
 		chart: {
 			type: 'bar',
 			renderTo: document.getElementById(id),
-			aanimation: false
+			animation: false,
+			title: null
 		},
 		loading: {showDuration: 0},
 		xAxis: {id: 'cats',categories: this._categories,tickColor: 'transparent',labels: {enabled: true}},
@@ -537,11 +538,29 @@ var run = function(bench,times) {
 	};
 };
 
+var step = function(times) {
+	for (let i = 0, items = iter$(apps), len = items.length, app; i < len; i++) {
+		app = items[i];
+		app.api().AUTORENDER = false;
+		tests.main.step(app.api(),app.api().RENDERCOUNT);
+		app.api().AUTORENDER = true;
+	};
+	return;
+};
+
+var reset = function() {
+	let res = [];
+	for (let i = 0, items = iter$(apps), len = items.length; i < len; i++) {
+		res.push(items[i].reset(parseInt(Imba.getTagSingleton('itemcount').value())));
+	};
+	return res;
+};
+
 
 Imba.mount(_T.$('div',this).setTemplate(function() {
 	var $ = this.$, self = this;
 	return Imba.static([
-		($.a=$.a || _T.$('header',this)).setContent([
+		($.a=$.a || _T.$('header',this).setId('header')).setContent([
 			($.b=$.b || _T.$('input',this).setId('itemcount').setType("number").setValue("6")).end(),
 			(function() {
 				var _$ = ($.c = $.c || []), _$1 = ($.d = $.d || []);
@@ -551,12 +570,10 @@ Imba.mount(_T.$('div',this).setTemplate(function() {
 					res.push((_$1[i]=_$1[i] || _T.$('button',self).setText("warmup")).on('tap',[run,desc,19234],0).end());
 				};
 				return res;
-			})()
+			})(),
+			($.e=$.e || _T.$('button',self).setText("step")).on('tap',step,0).end(),
+			($.f=$.f || _T.$('button',self).setText("reset")).on('tap',reset,0).end()
 		],1).end(),
-		($.e=$.e || _T.$('section',self).flag('runs')).setContent(
-			($.f=$.f || _T.$('div',self).setId('chart')).end()
-		,2).end(),
-		
 		($.g=$.g || _T.$('section',self).flag('apps')).setContent(
 			(function() {
 				let res = [];
@@ -565,9 +582,14 @@ Imba.mount(_T.$('div',this).setTemplate(function() {
 				};
 				return res;
 			})()
-		,3).end()
+		,3).end(),
+		($.h=$.h || _T.$('section',self).flag('runs')).setContent(
+			($.i=$.i || _T.$('div',self).setId('chart')).end()
+		,2).end()
 	],1);
 }).end());
+
+
 
 // var chart = Highcharts.chart('chart',{
 // 	type: 'bar'
